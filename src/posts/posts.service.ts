@@ -30,14 +30,9 @@ export class PostsService {
       relations: ['votes'],
     });
 
-    // Get unique user IDs
-    const userIds = [...new Set(posts.map((post) => post.userId))];
-    // const userProfiles = await this.supabaseService.getUserProfiles(userIds);
-
-    // Format response
     const formattedPosts = await Promise.all(
       posts.map(async (post) => {
-        // const userProfile = userProfiles.get(post.userId);
+        const post_owner = await this.supabaseService.getUserById(post.userId);
 
         // Check if current user is following post author
         // let isFollowed = false;
@@ -54,12 +49,12 @@ export class PostsService {
 
         return {
           id: post.id,
-          // user: {
-          //   id: post.userId,
-          //   name: userProfile?.name || userProfile?.email || 'Unknown User',
-          //   avatarUrl: userProfile?.avatar_url || '/images/default_avatar.jpg',
-          //   isFollowed,
-          // },
+          user: {
+            id: post_owner.id,
+            name: post_owner.name || post_owner.email || 'Unknown User',
+            avatarUrl: post_owner.avatar_url || '/images/default_avatar.jpg',
+            isFollowed: false,
+          },
           title: post.title,
           content: post.content,
           imageUrl: post.imageUrl,

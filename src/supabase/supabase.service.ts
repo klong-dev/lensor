@@ -65,10 +65,7 @@ export class SupabaseService {
   }
 
   async getUserProfiles(userIds: string[]): Promise<Map<string, any>> {
-    const { data, error } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .in('id', userIds);
+    const { data, error } = await this.supabase.auth.admin.listUsers();
 
     if (error) {
       console.error('Error fetching user profiles:', error);
@@ -76,8 +73,12 @@ export class SupabaseService {
     }
 
     const userMap = new Map<string, any>();
-    data?.forEach((profile) => {
-      userMap.set(profile.id, profile);
+    const users = (data?.users ?? []) as Array<{
+      id: string;
+      [key: string]: any;
+    }>;
+    users.forEach((user) => {
+      userMap.set(user.id, user);
     });
 
     return userMap;
