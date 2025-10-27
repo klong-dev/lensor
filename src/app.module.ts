@@ -19,6 +19,7 @@ import { ForumsModule } from './forums/forums.module';
 import { CommunicatesModule } from './communicates/communicates.module';
 import { UserFollowsModule } from './user-follows/user-follows.module';
 import { ProductsModule } from './products/products.module';
+import { UploadsModule } from './uploads/uploads.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -46,6 +47,7 @@ import jwtConfig from './config/jwt.config';
     CommunicatesModule,
     UserFollowsModule,
     ProductsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [

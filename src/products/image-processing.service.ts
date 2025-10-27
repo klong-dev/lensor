@@ -135,4 +135,30 @@ export class ImageProcessingService {
       return false;
     }
   }
+
+  /**
+   * Get image file from Python service
+   * @param filepath - Relative path like 'originals/filename.jpg' or 'thumbnails/filename.jpg'
+   * @returns Image buffer
+   */
+  async getImage(filepath: string): Promise<Buffer> {
+    try {
+      const response = await axios.get(
+        `${this.imageServiceUrl}/uploads/${filepath}`,
+        {
+          responseType: 'arraybuffer',
+          timeout: 10000,
+        },
+      );
+      return Buffer.from(response.data);
+    } catch (error) {
+      this.logger.error(`Error fetching image ${filepath}:`, error);
+      if (axios.isAxiosError(error)) {
+        throw new BadRequestException(
+          error.response?.data?.error || 'Image not found',
+        );
+      }
+      throw new BadRequestException('Failed to fetch image');
+    }
+  }
 }
