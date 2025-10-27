@@ -13,4 +13,8 @@ export class CreatePostDto {
   @IsString()
   @IsOptional()
   imageUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  thumbnailUrl?: string;
 }

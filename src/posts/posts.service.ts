@@ -5,6 +5,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
 import { SupabaseService } from '../supabase/supabase.service';
+import { UserFollowsService } from '../user-follows/user-follows.service';
 
 @Injectable()
 export class PostsService {
@@ -12,6 +13,7 @@ export class PostsService {
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
     private supabaseService: SupabaseService,
+    private userFollowsService: UserFollowsService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -35,13 +37,13 @@ export class PostsService {
         const post_owner = await this.supabaseService.getUserById(post.userId);
 
         // Check if current user is following post author
-        // let isFollowed = false;
-        // if (currentUserId && post.userId !== currentUserId) {
-        //   isFollowed = await this.supabaseService.checkIfFollowing(
-        //     currentUserId,
-        //     post.userId,
-        //   );
-        // }
+        let isFollowed = false;
+        if (currentUserId && post.userId !== currentUserId) {
+          isFollowed = await this.userFollowsService.isFollowing(
+            currentUserId,
+            post.userId,
+          );
+        }
 
         // Calculate vote count
         const voteCount =
@@ -53,7 +55,7 @@ export class PostsService {
             id: post_owner.id,
             name: post_owner.name || post_owner.email || 'Unknown User',
             avatarUrl: post_owner.avatar_url || '/images/default_avatar.jpg',
-            isFollowed: false,
+            isFollowed,
           },
           title: post.title,
           content: post.content,
@@ -82,7 +84,7 @@ export class PostsService {
 
     let isFollowed = false;
     if (currentUserId && post.userId !== currentUserId) {
-      isFollowed = await this.supabaseService.checkIfFollowing(
+      isFollowed = await this.userFollowsService.isFollowing(
         currentUserId,
         post.userId,
       );

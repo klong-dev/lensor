@@ -1,75 +1,127 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { extname } from 'path';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { JwtService } from '@nestjs/jwt';
+import axios from 'axios';
+import * as FormData from 'form-data';
 
 @Injectable()
 export class UploadService {
-  private uploadPath: string;
+  private readonly logger = new Logger(UploadService.name);
+  private imageServiceUrl: string;
 
-  constructor(private configService: ConfigService) {
-    this.uploadPath = join(process.cwd(), 'uploads');
-    this.ensureUploadDirectory();
+  constructor(
+    private configService: ConfigService,
+    private jwtService: JwtService,
+  ) {
+    this.imageServiceUrl =
+      this.configService.get<string>('IMAGE_SERVICE_URL') ||
+      'http://localhost:5000';
   }
 
-  private async ensureUploadDirectory() {
-    try {
-      await fs.access(this.uploadPath);
-    } catch {
-      await fs.mkdir(this.uploadPath, { recursive: true });
-    }
-  }
-
-  async uploadFile(file: Express.Multer.File): Promise<string> {
+  async uploadFile(
+    file: Express.Multer.File,
+    userId: string,
+  ): Promise<{ original: string; thumbnail: string }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
 
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/webp',
-    ];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException(
-        'Invalid file type. Only images are allowed',
+    try {
+      // Create JWT token for image service
+      const token = this.jwtService.sign(
+        { sub: userId },
+        { expiresIn: '5m' }, // Short-lived token for upload
       );
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+
+      // Call Python microservice
+      const response = await axios.post(
+        `${this.imageServiceUrl}/upload/single`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 60000, // 60s timeout for large files
+        },
+      );
+
+      if (response.data.success) {
+        return {
+          original: response.data.data.original,
+          thumbnail: response.data.data.thumbnail,
+        };
+      }
+
+      throw new BadRequestException('Image processing failed');
+    } catch (error) {
+      this.logger.error('Error uploading file:', error);
+      if (error.response?.data?.error) {
+        throw new BadRequestException(error.response.data.error);
+      }
+      throw new BadRequestException('Failed to upload file');
     }
-
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      throw new BadRequestException('File too large. Maximum size is 5MB');
-    }
-
-    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-    const filepath = join(this.uploadPath, filename);
-
-    await fs.writeFile(filepath, file.buffer);
-
-    return `/uploads/${filename}`;
   }
 
-  async uploadMultipleFiles(files: Express.Multer.File[]): Promise<string[]> {
+  async uploadMultipleFiles(
+    files: Express.Multer.File[],
+    userId: string,
+  ): Promise<Array<{ original: string; thumbnail: string }>> {
     if (!files || files.length === 0) {
       throw new BadRequestException('No files provided');
     }
 
-    const uploadPromises = files.map((file) => this.uploadFile(file));
-    return Promise.all(uploadPromises);
-  }
-
-  getFileUrl(filename: string): string {
-    return `/uploads/${filename}`;
-  }
-
-  async deleteFile(filename: string): Promise<void> {
     try {
-      const filepath = join(this.uploadPath, filename);
-      await fs.unlink(filepath);
+      // Create JWT token
+      const token = this.jwtService.sign({ sub: userId }, { expiresIn: '10m' });
+
+      // Create form data
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
+      });
+
+      // Call Python microservice
+      const response = await axios.post(
+        `${this.imageServiceUrl}/upload/multiple`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 120000, // 120s timeout for multiple files
+        },
+      );
+
+      if (response.data.success) {
+        return response.data.data.uploaded.map((item: any) => ({
+          original: item.original,
+          thumbnail: item.thumbnail,
+        }));
+      }
+
+      throw new BadRequestException('Image processing failed');
     } catch (error) {
-      console.error('Error deleting file:', error);
+      this.logger.error('Error uploading multiple files:', error);
+      if (error.response?.data?.error) {
+        throw new BadRequestException(error.response.data.error);
+      }
+      throw new BadRequestException('Failed to upload files');
     }
+  }
+
+  getImageServiceUrl(): string {
+    return this.imageServiceUrl;
   }
 }
