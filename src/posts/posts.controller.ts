@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ImageProcessingService } from '../products/image-processing.service';
+import { multerConfig } from '../config/multer.config';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -29,7 +30,7 @@ export class PostsController {
   ) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(FileInterceptor('image', multerConfig))
   async create(
     @Body() createPostDto: CreatePostDto,
     @UploadedFile() image: Express.Multer.File,

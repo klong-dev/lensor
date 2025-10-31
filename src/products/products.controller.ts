@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ImageProcessingService } from './image-processing.service';
+import { multerConfig } from '../config/multer.config';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -37,10 +38,13 @@ export class ProductsController {
 
   @Post('products')
   @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'file', maxCount: 1 }, // Main product image
-      { name: 'imagePairs', maxCount: 20 }, // Before/after images (max 10 pairs = 20 images)
-    ]),
+    FileFieldsInterceptor(
+      [
+        { name: 'file', maxCount: 1 }, // Main product image
+        { name: 'imagePairs', maxCount: 20 }, // Before/after images (max 10 pairs = 20 images)
+      ],
+      multerConfig,
+    ),
   )
   async create(
     @Body() createProductDto: CreateProductDto,
@@ -201,7 +205,7 @@ export class ProductsController {
   }
 
   @Post('products/upload-image')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', multerConfig))
   async uploadProductImage(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,

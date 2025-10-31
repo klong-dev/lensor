@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
@@ -27,7 +27,7 @@ export class PostsService {
 
   async findAll(currentUserId?: string) {
     const posts = await this.postRepository.find({
-      where: { deletedAt: null },
+      where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
       relations: ['votes'],
     });
@@ -72,7 +72,7 @@ export class PostsService {
 
   async findOne(id: string, currentUserId?: string) {
     const post = await this.postRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
       relations: ['votes'],
     });
 
@@ -116,7 +116,7 @@ export class PostsService {
     userId: string,
   ): Promise<Post> {
     const post = await this.postRepository.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, deletedAt: IsNull() },
     });
 
     if (!post) {
@@ -131,7 +131,7 @@ export class PostsService {
 
   async remove(id: string, userId: string): Promise<void> {
     const post = await this.postRepository.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, deletedAt: IsNull() },
     });
 
     if (!post) {
