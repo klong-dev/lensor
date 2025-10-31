@@ -53,8 +53,14 @@ export class PostsService {
           id: post.id,
           user: {
             id: post_owner.id,
-            name: post_owner.name || post_owner.email || 'Unknown User',
-            avatarUrl: post_owner.avatar_url || '/images/default_avatar.jpg',
+            name:
+              post_owner.user_metadata.name ||
+              post_owner.email ||
+              'Unknown User',
+            avatarUrl:
+              post_owner.user_metadata.picture ||
+              post_owner.avatar_url ||
+              '/images/default_avatar.jpg',
             isFollowed,
           },
           title: post.title,
