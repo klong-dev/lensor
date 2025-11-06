@@ -17,6 +17,7 @@ import {
   FileInterceptor,
   FilesInterceptor,
   FileFieldsInterceptor,
+  AnyFilesInterceptor,
 } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -37,15 +38,7 @@ export class ProductsController {
   ) {}
 
   @Post('products')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'file', maxCount: 1 }, // Main product image
-        { name: 'imagePairs', maxCount: 20 }, // Before/after images (max 10 pairs = 20 images)
-      ],
-      multerConfig,
-    ),
-  )
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async create(
     @Body() createProductDto: CreateProductDto,
     @UploadedFiles()
