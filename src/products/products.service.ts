@@ -39,7 +39,14 @@ export class ProductsService {
         : null,
     });
 
-    return await this.productRepository.save(product);
+    const savedProduct = await this.productRepository.save(product);
+
+    return {
+      ...savedProduct,
+      imagePairs: savedProduct.imagePairs
+        ? JSON.parse(savedProduct.imagePairs)
+        : [],
+    };
   }
 
   async findAll() {
@@ -142,7 +149,7 @@ export class ProductsService {
         verified: author?.verified || false,
         totalProducts,
       },
-      imagePairs,
+      imagePairs: imagePairs ? JSON.parse(JSON.stringify(imagePairs)) : [],
       category: product.category,
       tags,
       compatibility,

@@ -48,42 +48,6 @@ export class SupabaseService {
     return userMap;
   }
 
-  async getUserProfile(userId: string): Promise<any> {
-    // Lấy thông tin từ bảng profiles trong Supabase
-    const { data, error } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
-
-    return data;
-  }
-
-  async getUserProfiles(userIds: string[]): Promise<Map<string, any>> {
-    const { data, error } = await this.supabase.auth.admin.listUsers();
-
-    if (error) {
-      console.error('Error fetching user profiles:', error);
-      return new Map();
-    }
-
-    const userMap = new Map<string, any>();
-    const users = (data?.users ?? []) as Array<{
-      id: string;
-      [key: string]: any;
-    }>;
-    users.forEach((user) => {
-      userMap.set(user.id, user);
-    });
-
-    return userMap;
-  }
-
   async checkIfFollowing(
     followerId: string,
     followingId: string,

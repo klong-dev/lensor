@@ -20,6 +20,7 @@ import { CommunicatesModule } from './communicates/communicates.module';
 import { UserFollowsModule } from './user-follows/user-follows.module';
 import { ProductsModule } from './products/products.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { UsersModule } from './users/users.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -48,6 +49,7 @@ import jwtConfig from './config/jwt.config';
     UserFollowsModule,
     ProductsModule,
     UploadsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

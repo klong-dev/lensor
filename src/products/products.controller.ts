@@ -13,12 +13,7 @@ import {
   Req,
   UploadedFiles,
 } from '@nestjs/common';
-import {
-  FileInterceptor,
-  FilesInterceptor,
-  FileFieldsInterceptor,
-  AnyFilesInterceptor,
-} from '@nestjs/platform-express';
+import { FileInterceptor, AnyFilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -28,6 +23,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ImageProcessingService } from './image-processing.service';
 import { multerConfig } from '../config/multer.config';
+import { getFile, getFileByGroupFileName } from '../libs/uploadFile';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -42,44 +38,30 @@ export class ProductsController {
   async create(
     @Body() createProductDto: CreateProductDto,
     @UploadedFiles()
-    files: {
-      file?: Express.Multer.File[];
-      imagePairs?: Express.Multer.File[];
-    },
+    files: Express.Multer.File[],
     @CurrentUser() user: { userId: string },
-    @Req() req: any,
   ) {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.split(' ')[1];
-
     // Process main image if uploaded
-    if (files?.file?.[0]) {
-      const mainFile = files.file[0];
-      console.log('📁 Main file uploaded:', {
-        filename: mainFile.originalname,
-        mimetype: mainFile.mimetype,
-        size: mainFile.size,
-      });
-
-      if (token) {
+    if (files) {
+      const productImage = getFile(files, 'image');
+      if (!productImage) {
+        throw new Error('Product image file not found');
+      }
+      if (user) {
         try {
-          console.log('🔄 Processing main image...');
           const result = await this.imageProcessingService.processSingleImage(
-            mainFile,
-            token,
+            productImage,
+            user.userId,
           );
-
-          console.log('✅ Main image processed:', result);
-
           // Set image and thumbnail URLs from Python service
           createProductDto.image = result.original;
           createProductDto.thumbnail = result.thumbnail;
         } catch (error) {
-          console.error('❌ Main image processing failed:', error);
           console.error(
             'Error details:',
             error.response?.data || error.message,
           );
+          throw error;
         }
       }
     } else {
@@ -87,48 +69,34 @@ export class ProductsController {
     }
 
     // Process imagePairs if uploaded
-    if (files?.imagePairs && files.imagePairs.length > 0) {
-      console.log(`📁 ImagePairs uploaded: ${files.imagePairs.length} files`);
-
-      if (token) {
-        try {
-          console.log('🔄 Processing imagePairs...');
-
-          // Process all imagePair files
-          const processedImages =
-            await this.imageProcessingService.processMultipleImages(
-              files.imagePairs,
-              token,
+    const imagePairs = getFileByGroupFileName(files, 'imagePairs');
+    if (imagePairs) {
+      try {
+        // Group images into pairs (every 2 images = 1 pair)
+        // Assuming files are uploaded in order: before1, after1, before2, after2, etc.
+        const pairs: Array<{ before: string; after: string }> = [];
+        for (const imagePair of imagePairs) {
+          const processedBefore =
+            await this.imageProcessingService.processSingleImage(
+              imagePair.before,
+              user.userId,
             );
-
-          console.log(
-            `✅ ImagePairs processed: ${processedImages.successful} successful`,
-          );
-
-          // Group images into pairs (every 2 images = 1 pair)
-          // Assuming files are uploaded in order: before1, after1, before2, after2, etc.
-          const pairs: Array<{ before: string; after: string }> = [];
-          for (let i = 0; i < processedImages.uploaded.length; i += 2) {
-            if (i + 1 < processedImages.uploaded.length) {
-              pairs.push({
-                before: processedImages.uploaded[i].original,
-                after: processedImages.uploaded[i + 1].original,
-              });
-            }
-          }
-
-          createProductDto.imagePairs = pairs;
-          console.log(`✅ Created ${pairs.length} image pairs`);
-        } catch (error) {
-          console.error('❌ ImagePairs processing failed:', error);
-          console.error(
-            'Error details:',
-            error.response?.data || error.message,
-          );
+          const processedAfter =
+            await this.imageProcessingService.processSingleImage(
+              imagePair.after,
+              user.userId,
+            );
+          pairs.push({
+            before: processedBefore.original,
+            after: processedAfter.original,
+          });
         }
+
+        createProductDto.imagePairs = pairs;
+      } catch (error) {
+        console.log('❌ ImagePairs processing failed:', error);
+        throw error;
       }
-    } else {
-      console.log('ℹ️ No imagePairs uploaded');
     }
 
     const product = await this.productsService.create(
