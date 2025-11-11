@@ -5,6 +5,7 @@ import { PostsController } from './posts.controller';
 import { Post } from './entities/post.entity';
 import { SupabaseModule } from '../supabase/supabase.module';
 import { UserFollowsModule } from '../user-follows/user-follows.module';
+import { PostLikesModule } from '../post-likes/post-likes.module';
 import { ImageProcessingService } from '../products/image-processing.service';
 
 @Module({
@@ -12,6 +13,7 @@ import { ImageProcessingService } from '../products/image-processing.service';
     TypeOrmModule.forFeature([Post]),
     SupabaseModule,
     UserFollowsModule,
+    PostLikesModule,
   ],
   controllers: [PostsController],
   providers: [PostsService, ImageProcessingService],

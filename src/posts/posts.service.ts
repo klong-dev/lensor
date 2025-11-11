@@ -6,6 +6,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UserFollowsService } from '../user-follows/user-follows.service';
+import { PostLikesService } from '../post-likes/post-likes.service';
 
 @Injectable()
 export class PostsService {
@@ -14,6 +15,7 @@ export class PostsService {
     private postRepository: Repository<Post>,
     private supabaseService: SupabaseService,
     private userFollowsService: UserFollowsService,
+    private postLikesService: PostLikesService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -55,6 +57,15 @@ export class PostsService {
         const voteCount =
           post.votes?.reduce((sum, vote) => sum + vote.value, 0) || 0;
 
+        // Check if current user liked this post
+        let isLiked = false;
+        if (currentUserId) {
+          isLiked = await this.postLikesService.isPostLikedByUser(
+            post.id,
+            currentUserId,
+          );
+        }
+
         return {
           id: post.id,
           user: {
@@ -77,6 +88,7 @@ export class PostsService {
           thumbnailUrl: post.thumbnailUrl,
           imageMetadata: post.imageMetadata || null,
           voteCount,
+          isLiked,
           commentCount: 0, // TODO: Implement when comment feature is added
           createdAt: this.formatDate(post.createdAt),
         };
@@ -115,6 +127,15 @@ export class PostsService {
     const voteCount =
       post.votes?.reduce((sum, vote) => sum + vote.value, 0) || 0;
 
+    // Check if current user liked this post
+    let isLiked = false;
+    if (currentUserId) {
+      isLiked = await this.postLikesService.isPostLikedByUser(
+        post.id,
+        currentUserId,
+      );
+    }
+
     return {
       id: post.id,
       user: {
@@ -129,6 +150,7 @@ export class PostsService {
       thumbnailUrl: post.thumbnailUrl,
       imageMetadata: post.imageMetadata || null,
       voteCount,
+      isLiked,
       commentCount: 0,
       createdAt: this.formatDate(post.createdAt),
     };
