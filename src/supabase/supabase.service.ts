@@ -19,6 +19,19 @@ export class SupabaseService {
     return this.supabase;
   }
 
+  async getOAuthURL(provider: string, redirectTo: string): Promise<string> {
+    const { data, error } = await this.supabase.auth.signInWithOAuth({
+      provider: provider as any,
+      options: {
+        redirectTo,
+      },
+    });
+    if (error) {
+      throw error;
+    }
+    return data.url;
+  }
+
   async getUserById(userId: string): Promise<any> {
     const { data, error } = await this.supabase.auth.admin.getUserById(userId);
 
@@ -27,6 +40,24 @@ export class SupabaseService {
     }
 
     return data?.user;
+  }
+
+  async getUserProfile(userId: string): Promise<any> {
+    const user = await this.getUserById(userId);
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email?.split('@')[0],
+      avatar_url:
+        user.user_metadata?.avatar_url || '/images/default_avatar.jpg',
+      bio: user.user_metadata?.bio,
+      phone: user.phone || user.user_metadata?.phone,
+    };
   }
 
   async getUsersByIds(userIds: string[]): Promise<Map<string, any>> {

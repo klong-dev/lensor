@@ -155,14 +155,14 @@ export class UsersService {
       // Filter users by query
       const searchQuery = query.toLowerCase();
       const filteredUsers = data.users
-        .filter((user) => {
+        .filter((user: any) => {
           const email = user.email?.toLowerCase() || '';
           const name = user.user_metadata?.name?.toLowerCase() || '';
           return email.includes(searchQuery) || name.includes(searchQuery);
         })
         .slice(0, limit);
 
-      return filteredUsers.map((user) => this.mapToUserDto(user));
+      return filteredUsers.map((user: any) => this.mapToUserDto(user));
     } catch (error) {
       throw new Error(`Failed to search users: ${error.message}`);
     }

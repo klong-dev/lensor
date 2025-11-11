@@ -11,6 +11,8 @@ import {
 import { Vote } from '../../vote/entities/vote.entity';
 import { Category } from '../../categories/entities/category.entity';
 import { Communicate } from '../../communicates/entities/communicate.entity';
+import { PostLike } from '../../post-likes/entities/post-like.entity';
+import { PostComment } from '../../post-comments/entities/post-comment.entity';
 
 @Entity('posts')
 export class Post {
@@ -52,6 +54,12 @@ export class Post {
 
   @OneToMany(() => Vote, (vote) => vote.post)
   votes: Vote[];
+
+  @OneToMany(() => PostLike, (like) => like.post)
+  likes: PostLike[];
+
+  @OneToMany(() => PostComment, (comment) => comment.post)
+  comments: PostComment[];
 
   @ManyToOne(() => Category, (category) => category.posts)
   @JoinColumn({ name: 'category_id' })

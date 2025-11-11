@@ -34,11 +34,17 @@ export class PostsService {
 
     const formattedPosts = await Promise.all(
       posts.map(async (post) => {
-        const post_owner = await this.supabaseService.getUserById(post.userId);
+        let post_owner;
+        try {
+          post_owner = await this.supabaseService.getUserById(post.userId);
+        } catch {
+          // User not found (deleted account), return deleted user placeholder
+          post_owner = null;
+        }
 
         // Check if current user is following post author
         let isFollowed = false;
-        if (currentUserId && post.userId !== currentUserId) {
+        if (currentUserId && post.userId !== currentUserId && post_owner) {
           isFollowed = await this.userFollowsService.isFollowing(
             currentUserId,
             post.userId,
@@ -52,15 +58,17 @@ export class PostsService {
         return {
           id: post.id,
           user: {
-            id: post_owner.id,
-            name:
-              post_owner.user_metadata.name ||
-              post_owner.email ||
-              'Unknown User',
-            avatarUrl:
-              post_owner.user_metadata.picture ||
-              post_owner.avatar_url ||
-              '/images/default_avatar.jpg',
+            id: post_owner?.id || post.userId,
+            name: post_owner
+              ? post_owner.user_metadata.name ||
+                post_owner.email ||
+                'Unknown User'
+              : 'Deleted User',
+            avatarUrl: post_owner
+              ? post_owner.user_metadata.picture ||
+                post_owner.avatar_url ||
+                '/images/default_avatar.jpg'
+              : '/images/deleted_user.jpg',
             isFollowed,
           },
           title: post.title,
@@ -86,10 +94,16 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
-    const userProfile = await this.supabaseService.getUserProfile(post.userId);
+    let userProfile;
+    try {
+      userProfile = await this.supabaseService.getUserProfile(post.userId);
+    } catch {
+      // User not found (deleted account)
+      userProfile = null;
+    }
 
     let isFollowed = false;
-    if (currentUserId && post.userId !== currentUserId) {
+    if (currentUserId && post.userId !== currentUserId && userProfile) {
       isFollowed = await this.userFollowsService.isFollowing(
         currentUserId,
         post.userId,
@@ -103,8 +117,8 @@ export class PostsService {
       id: post.id,
       user: {
         id: post.userId,
-        name: userProfile?.name || userProfile?.email || 'Unknown User',
-        avatarUrl: userProfile?.avatar_url || '/images/default_avatar.jpg',
+        name: userProfile?.name || userProfile?.email || 'Deleted User',
+        avatarUrl: userProfile?.avatar_url || '/images/deleted_user.jpg',
         isFollowed,
       },
       title: post.title,
