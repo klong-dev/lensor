@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class CartService {
   constructor(
     @InjectRepository(CartItem)
     private cartItemRepository: Repository<CartItem>,
+    private productsService: ProductsService,
   ) {}
 
   async getCart(userId: string) {
@@ -29,12 +31,14 @@ export class CartService {
     };
   }
 
-  async addToCart(
-    userId: string,
-    productId: string,
-    quantity: number,
-    price: number,
-  ) {
+  async addToCart(userId: string, productId: string, quantity: number) {
+    // Get product to get the price
+    const product = await this.productsService.findOne(productId);
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
     // Check if item already in cart
     let cartItem = await this.cartItemRepository.findOne({
       where: { userId, productId },
@@ -46,12 +50,12 @@ export class CartService {
       return await this.cartItemRepository.save(cartItem);
     }
 
-    // Create new cart item
+    // Create new cart item with product price
     cartItem = this.cartItemRepository.create({
       userId,
       productId,
       quantity,
-      price,
+      price: product.price,
     });
 
     return await this.cartItemRepository.save(cartItem);

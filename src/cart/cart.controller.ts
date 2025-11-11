@@ -25,14 +25,13 @@ export class CartController {
 
   @Post('add')
   async addToCart(
-    @Body() body: { productId: string; quantity: number; price: number },
+    @Body() body: { productId: string; quantity: number },
     @CurrentUser() user: { userId: string },
   ) {
     const item = await this.cartService.addToCart(
       user.userId,
       body.productId,
       body.quantity,
-      body.price,
     );
     return { data: item, message: 'Added to cart' };
   }
