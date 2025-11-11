@@ -19,6 +19,19 @@ export class SupabaseService {
     return this.supabase;
   }
 
+  async getOAuthURL(provider: string, redirectTo: string): Promise<string> {
+    const { data, error } = await this.supabase.auth.signInWithOAuth({
+      provider: provider as any,
+      options: {
+        redirectTo,
+      },
+    });
+    if (error) {
+      throw error;
+    }
+    return data.url;
+  }
+
   async getUserById(userId: string): Promise<any> {
     const { data, error } = await this.supabase.auth.admin.getUserById(userId);
 
@@ -27,6 +40,24 @@ export class SupabaseService {
     }
 
     return data?.user;
+  }
+
+  async getUserProfile(userId: string): Promise<any> {
+    const user = await this.getUserById(userId);
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email?.split('@')[0],
+      avatar_url:
+        user.user_metadata?.avatar_url || '/images/default_avatar.jpg',
+      bio: user.user_metadata?.bio,
+      phone: user.phone || user.user_metadata?.phone,
+    };
   }
 
   async getUsersByIds(userIds: string[]): Promise<Map<string, any>> {
@@ -43,42 +74,6 @@ export class SupabaseService {
       if (user) {
         userMap.set(userIds[index], user);
       }
-    });
-
-    return userMap;
-  }
-
-  async getUserProfile(userId: string): Promise<any> {
-    // Lấy thông tin từ bảng profiles trong Supabase
-    const { data, error } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
-
-    return data;
-  }
-
-  async getUserProfiles(userIds: string[]): Promise<Map<string, any>> {
-    const { data, error } = await this.supabase.auth.admin.listUsers();
-
-    if (error) {
-      console.error('Error fetching user profiles:', error);
-      return new Map();
-    }
-
-    const userMap = new Map<string, any>();
-    const users = (data?.users ?? []) as Array<{
-      id: string;
-      [key: string]: any;
-    }>;
-    users.forEach((user) => {
-      userMap.set(user.id, user);
     });
 
     return userMap;

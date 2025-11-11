@@ -7,24 +7,72 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  Req,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { ImageProcessingService } from '../products/image-processing.service';
+import { multerConfig } from '../config/multer.config';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly imageProcessingService: ImageProcessingService,
+  ) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('image', multerConfig))
   async create(
     @Body() createPostDto: CreatePostDto,
+    @UploadedFile() image: Express.Multer.File,
     @CurrentUser() user: { userId: string },
+    @Req() req: any,
   ) {
+    // Process image if uploaded
+    if (image) {
+      console.log('📁 Post image uploaded:', {
+        filename: image.originalname,
+        mimetype: image.mimetype,
+        size: image.size,
+      });
+
+      const authHeader = req.headers.authorization;
+      const token = authHeader?.split(' ')[1];
+
+      if (token) {
+        try {
+          console.log('🔄 Processing post image...');
+          const result = await this.imageProcessingService.processSingleImage(
+            image,
+            token,
+          );
+
+          console.log('✅ Post image processed:', result);
+
+          // Set image and thumbnail URLs from Python service
+          createPostDto.imageUrl = result.original;
+          createPostDto.thumbnailUrl = result.thumbnail;
+        } catch (error) {
+          console.error('❌ Post image processing failed:', error);
+          console.error(
+            'Error details:',
+            error.response?.data || error.message,
+          );
+        }
+      }
+    } else {
+      console.log('ℹ️ No image uploaded for post');
+    }
+
     const post = await this.postsService.create(createPostDto, user.userId);
     return { data: post };
   }

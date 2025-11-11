@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
 import { SupabaseService } from '../supabase/supabase.service';
+import { UserFollowsService } from '../user-follows/user-follows.service';
 
 @Injectable()
 export class PostsService {
@@ -12,6 +13,7 @@ export class PostsService {
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
     private supabaseService: SupabaseService,
+    private userFollowsService: UserFollowsService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -25,23 +27,29 @@ export class PostsService {
 
   async findAll(currentUserId?: string) {
     const posts = await this.postRepository.find({
-      where: { deletedAt: null },
+      where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
       relations: ['votes'],
     });
 
     const formattedPosts = await Promise.all(
       posts.map(async (post) => {
-        const post_owner = await this.supabaseService.getUserById(post.userId);
+        let post_owner;
+        try {
+          post_owner = await this.supabaseService.getUserById(post.userId);
+        } catch {
+          // User not found (deleted account), return deleted user placeholder
+          post_owner = null;
+        }
 
         // Check if current user is following post author
-        // let isFollowed = false;
-        // if (currentUserId && post.userId !== currentUserId) {
-        //   isFollowed = await this.supabaseService.checkIfFollowing(
-        //     currentUserId,
-        //     post.userId,
-        //   );
-        // }
+        let isFollowed = false;
+        if (currentUserId && post.userId !== currentUserId && post_owner) {
+          isFollowed = await this.userFollowsService.isFollowing(
+            currentUserId,
+            post.userId,
+          );
+        }
 
         // Calculate vote count
         const voteCount =
@@ -50,10 +58,18 @@ export class PostsService {
         return {
           id: post.id,
           user: {
-            id: post_owner.id,
-            name: post_owner.name || post_owner.email || 'Unknown User',
-            avatarUrl: post_owner.avatar_url || '/images/default_avatar.jpg',
-            isFollowed: false,
+            id: post_owner?.id || post.userId,
+            name: post_owner
+              ? post_owner.user_metadata.name ||
+                post_owner.email ||
+                'Unknown User'
+              : 'Deleted User',
+            avatarUrl: post_owner
+              ? post_owner.user_metadata.picture ||
+                post_owner.avatar_url ||
+                '/images/default_avatar.jpg'
+              : '/images/deleted_user.jpg',
+            isFollowed,
           },
           title: post.title,
           content: post.content,
@@ -70,7 +86,7 @@ export class PostsService {
 
   async findOne(id: string, currentUserId?: string) {
     const post = await this.postRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
       relations: ['votes'],
     });
 
@@ -78,11 +94,17 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
-    const userProfile = await this.supabaseService.getUserProfile(post.userId);
+    let userProfile;
+    try {
+      userProfile = await this.supabaseService.getUserProfile(post.userId);
+    } catch {
+      // User not found (deleted account)
+      userProfile = null;
+    }
 
     let isFollowed = false;
-    if (currentUserId && post.userId !== currentUserId) {
-      isFollowed = await this.supabaseService.checkIfFollowing(
+    if (currentUserId && post.userId !== currentUserId && userProfile) {
+      isFollowed = await this.userFollowsService.isFollowing(
         currentUserId,
         post.userId,
       );
@@ -95,8 +117,8 @@ export class PostsService {
       id: post.id,
       user: {
         id: post.userId,
-        name: userProfile?.name || userProfile?.email || 'Unknown User',
-        avatarUrl: userProfile?.avatar_url || '/images/default_avatar.jpg',
+        name: userProfile?.name || userProfile?.email || 'Deleted User',
+        avatarUrl: userProfile?.avatar_url || '/images/deleted_user.jpg',
         isFollowed,
       },
       title: post.title,
@@ -114,7 +136,7 @@ export class PostsService {
     userId: string,
   ): Promise<Post> {
     const post = await this.postRepository.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, deletedAt: IsNull() },
     });
 
     if (!post) {
@@ -129,7 +151,7 @@ export class PostsService {
 
   async remove(id: string, userId: string): Promise<void> {
     const post = await this.postRepository.findOne({
-      where: { id, userId, deletedAt: null },
+      where: { id, userId, deletedAt: IsNull() },
     });
 
     if (!post) {
