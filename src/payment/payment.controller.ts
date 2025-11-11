@@ -69,13 +69,9 @@ export class PaymentController {
   @Public()
   async vnpayReturn(@Query() query: any, @Res() res: Response) {
     const result = await this.paymentService.verifyVNPayCallback(query);
-
-    // Redirect to frontend with payment result
-    const redirectUrl = result.success
-      ? `http://localhost:3000/payment/success?orderId=${result.orderId}`
-      : `http://localhost:3000/payment/failed?orderId=${result.orderId}&code=${result.responseCode}`;
-
-    return res.redirect(redirectUrl);
+    return res
+      .status(200)
+      .json({ data: { success: result.success, orderId: result.orderId } });
   }
 
   @Get('vnpay-ipn')
