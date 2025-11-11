@@ -28,9 +28,7 @@ export class PaymentHistoryService {
   /**
    * Create payment history record
    */
-  async createHistory(
-    data: CreatePaymentHistoryDto,
-  ): Promise<PaymentHistory> {
+  async createHistory(data: CreatePaymentHistoryDto): Promise<PaymentHistory> {
     const history = this.paymentHistoryRepository.create({
       ...data,
       currency: data.currency || 'VND',

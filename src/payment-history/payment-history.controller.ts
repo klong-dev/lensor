@@ -6,9 +6,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller('payment-history')
 @UseGuards(JwtAuthGuard)
 export class PaymentHistoryController {
-  constructor(
-    private readonly paymentHistoryService: PaymentHistoryService,
-  ) {}
+  constructor(private readonly paymentHistoryService: PaymentHistoryService) {}
 
   @Get()
   async getHistory(
@@ -35,17 +33,14 @@ export class PaymentHistoryController {
 
   @Get('stats')
   async getStats(@CurrentUser() user: { userId: string }) {
-    const stats = await this.paymentHistoryService.getPaymentStats(
-      user.userId,
-    );
+    const stats = await this.paymentHistoryService.getPaymentStats(user.userId);
     return { data: stats };
   }
 
   @Get('order/:orderId')
   async getHistoryByOrder(@Param('orderId') orderId: string) {
-    const history = await this.paymentHistoryService.getHistoryByOrderId(
-      orderId,
-    );
+    const history =
+      await this.paymentHistoryService.getHistoryByOrderId(orderId);
     return { data: history };
   }
 }
