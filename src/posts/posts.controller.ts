@@ -61,6 +61,11 @@ export class PostsController {
           // Set image and thumbnail URLs from Python service
           createPostDto.imageUrl = result.original;
           createPostDto.thumbnailUrl = result.thumbnail;
+
+          // Store comprehensive image metadata
+          if (result.metadata) {
+            createPostDto['imageMetadata'] = result.metadata;
+          }
         } catch (error) {
           console.error('❌ Post image processing failed:', error);
           console.error(
