@@ -153,8 +153,6 @@ export class Post {
   communicate?: Communicate;
 
   // Virtual fields (không lưu trong DB)
-  voteCount?: number;
-  commentCount?: number;
   isLiked?: boolean;
 
   // User info from Supabase

@@ -7,6 +7,7 @@ import { Post } from './entities/post.entity';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UserFollowsService } from '../user-follows/user-follows.service';
 import { PostLikesService } from '../post-likes/post-likes.service';
+import { PostCommentsService } from '../post-comments/post-comments.service';
 
 @Injectable()
 export class PostsService {
@@ -16,6 +17,7 @@ export class PostsService {
     private supabaseService: SupabaseService,
     private userFollowsService: UserFollowsService,
     private postLikesService: PostLikesService,
+    private postCommentsService: PostCommentsService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -31,7 +33,6 @@ export class PostsService {
     const posts = await this.postRepository.find({
       where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
-      relations: ['votes'],
     });
 
     const formattedPosts = await Promise.all(
@@ -53,9 +54,13 @@ export class PostsService {
           );
         }
 
-        // Calculate vote count
-        const voteCount =
-          post.votes?.reduce((sum, vote) => sum + vote.value, 0) || 0;
+        // Calculate vote count from post likes
+        const voteCount = await this.postLikesService.getPostLikeCount(post.id);
+
+        // Calculate comment count
+        const commentCount = await this.postCommentsService.getCommentCount(
+          post.id,
+        );
 
         // Check if current user liked this post
         let isLiked = false;
@@ -89,7 +94,7 @@ export class PostsService {
           imageMetadata: post.imageMetadata || null,
           voteCount,
           isLiked,
-          commentCount: 0, // TODO: Implement when comment feature is added
+          commentCount,
           createdAt: this.formatDate(post.createdAt),
         };
       }),
@@ -101,7 +106,6 @@ export class PostsService {
   async findOne(id: string, currentUserId?: string) {
     const post = await this.postRepository.findOne({
       where: { id, deletedAt: IsNull() },
-      relations: ['votes'],
     });
 
     if (!post) {
@@ -124,8 +128,13 @@ export class PostsService {
       );
     }
 
-    const voteCount =
-      post.votes?.reduce((sum, vote) => sum + vote.value, 0) || 0;
+    // Calculate vote count from post likes
+    const voteCount = await this.postLikesService.getPostLikeCount(post.id);
+
+    // Calculate comment count
+    const commentCount = await this.postCommentsService.getCommentCount(
+      post.id,
+    );
 
     // Check if current user liked this post
     let isLiked = false;
@@ -151,7 +160,7 @@ export class PostsService {
       imageMetadata: post.imageMetadata || null,
       voteCount,
       isLiked,
-      commentCount: 0,
+      commentCount,
       createdAt: this.formatDate(post.createdAt),
     };
   }
