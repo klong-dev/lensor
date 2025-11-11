@@ -74,6 +74,8 @@ export class PostsService {
           title: post.title,
           content: post.content,
           imageUrl: post.imageUrl,
+          thumbnailUrl: post.thumbnailUrl,
+          imageMetadata: post.imageMetadata || null,
           voteCount,
           commentCount: 0, // TODO: Implement when comment feature is added
           createdAt: this.formatDate(post.createdAt),
@@ -124,6 +126,8 @@ export class PostsService {
       title: post.title,
       content: post.content,
       imageUrl: post.imageUrl,
+      thumbnailUrl: post.thumbnailUrl,
+      imageMetadata: post.imageMetadata || null,
       voteCount,
       commentCount: 0,
       createdAt: this.formatDate(post.createdAt),
