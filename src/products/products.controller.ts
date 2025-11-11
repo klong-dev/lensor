@@ -56,6 +56,11 @@ export class ProductsController {
           // Set image and thumbnail URLs from Python service
           createProductDto.image = result.original;
           createProductDto.thumbnail = result.thumbnail;
+
+          // Store comprehensive image metadata
+          if (result.metadata) {
+            createProductDto['imageMetadata'] = result.metadata;
+          }
         } catch (error) {
           console.error(
             'Error details:',
@@ -96,6 +101,56 @@ export class ProductsController {
       } catch (error) {
         console.log('❌ ImagePairs processing failed:', error);
         throw error;
+      }
+    }
+
+    // Process preset files if uploaded (.xmp, .lrtemplate, .dcp)
+    const presetFiles = files?.filter(
+      (file) =>
+        file.fieldname === 'presetFiles' ||
+        file.fieldname.startsWith('presetFiles['),
+    );
+
+    if (presetFiles && presetFiles.length > 0) {
+      try {
+        const uploadedPresets: string[] = [];
+        const allowedExtensions = ['.xmp', '.lrtemplate', '.dcp', '.dng'];
+
+        for (const presetFile of presetFiles) {
+          const fileExt = presetFile.originalname
+            .toLowerCase()
+            .substring(presetFile.originalname.lastIndexOf('.'));
+
+          // Validate file extension
+          if (!allowedExtensions.includes(fileExt)) {
+            console.warn(
+              `⚠️ Skipping invalid preset file: ${presetFile.originalname}. Allowed: ${allowedExtensions.join(', ')}`,
+            );
+            continue;
+          }
+
+          // Upload preset file to storage (direct upload without image processing)
+          const result = await this.imageProcessingService.uploadPresetFile(
+            presetFile,
+            user.userId,
+          );
+
+          uploadedPresets.push(result.url);
+          console.log(
+            `✅ Preset file uploaded: ${presetFile.originalname} -> ${result.url}`,
+          );
+        }
+
+        if (uploadedPresets.length > 0) {
+          createProductDto.presetFiles = uploadedPresets;
+          console.log(
+            `✅ Total ${uploadedPresets.length} preset files uploaded`,
+          );
+        }
+      } catch (error) {
+        console.error('❌ Preset files upload failed:', error);
+        // Don't throw error - preset files are optional
+        // throw error;
       }
     }
 

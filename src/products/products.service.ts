@@ -24,6 +24,9 @@ export class ProductsService {
       imagePairs: createProductDto.imagePairs
         ? JSON.stringify(createProductDto.imagePairs)
         : null,
+      presetFiles: createProductDto.presetFiles
+        ? JSON.stringify(createProductDto.presetFiles)
+        : null,
       tags: createProductDto.tags ? createProductDto.tags.join(',') : null,
       compatibility: createProductDto.compatibility
         ? createProductDto.compatibility.join(',')
@@ -45,6 +48,9 @@ export class ProductsService {
       ...savedProduct,
       imagePairs: savedProduct.imagePairs
         ? JSON.parse(savedProduct.imagePairs)
+        : [],
+      presetFiles: savedProduct.presetFiles
+        ? JSON.parse(savedProduct.presetFiles)
         : [],
     };
   }
@@ -72,6 +78,8 @@ export class ProductsService {
             avatar: author?.avatar_url || '/images/default_avatar.jpg',
           },
           rating: Number(product.rating),
+          reviewCount: product.reviewCount,
+          sellCount: product.sellCount,
           category: product.category,
         };
       }),
@@ -97,6 +105,9 @@ export class ProductsService {
 
     // Parse JSON fields
     const imagePairs = product.imagePairs ? JSON.parse(product.imagePairs) : [];
+    const presetFiles = product.presetFiles
+      ? JSON.parse(product.presetFiles)
+      : [];
     // simple-array types are already arrays from TypeORM
     const tags = Array.isArray(product.tags)
       ? product.tags
@@ -143,13 +154,18 @@ export class ProductsService {
       rating: Number(product.rating),
       reviewCount: product.reviewCount,
       downloads: product.downloads,
+      sellCount: product.sellCount,
       author: {
         name: author?.name || author?.email || 'Unknown User',
         avatar: author?.avatar_url || '/images/default_avatar.jpg',
         verified: author?.verified || false,
         totalProducts,
       },
+      image: product.image,
+      thumbnail: product.thumbnail,
       imagePairs: imagePairs ? JSON.parse(JSON.stringify(imagePairs)) : [],
+      imageMetadata: product.imageMetadata || null,
+      presetFiles: presetFiles,
       category: product.category,
       tags,
       compatibility,
@@ -184,6 +200,9 @@ export class ProductsService {
 
     if (updateProductDto.imagePairs) {
       updateData.imagePairs = JSON.stringify(updateProductDto.imagePairs);
+    }
+    if (updateProductDto.presetFiles) {
+      updateData.presetFiles = JSON.stringify(updateProductDto.presetFiles);
     }
     if (updateProductDto.tags) {
       updateData.tags = updateProductDto.tags.join(',');
