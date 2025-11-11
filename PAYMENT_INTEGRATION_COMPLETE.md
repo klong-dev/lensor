@@ -363,18 +363,18 @@ Send (auto-uses saved variables)
 ### Test Credentials
 
 **VNPay Sandbox:**
-- TMN Code: LDY7BZ35
-- Hash Secret: JT6NS5XSWD2FYMLFLGEBBVB5B1ZF2GUR
+- TMN Code: YOUR_VNPAY_TMN_CODE
+- Hash Secret: YOUR_VNPAY_HASH_SECRET
 - Test Card: 9704198526191432198
 - Card Holder: NGUYEN VAN A
 - Issue Date: 07/15
 - OTP: 123456
 
 **PayPal Sandbox:**
-- Client ID: AchfFTey19rXVaEvCgnaADFCAENS8incomBrajb2dXiWzz2MaI_5gXyXHOc_rTPe2R2n-94eKgvrRCyu
-- Client Secret: EByo0jlNBV1BW3VcBmXLmNJdBdQZtNb1iBMV2uSwwIqNBRvBc-IYk5j57rWU83_aUZnGdSWRjWuPrc-0
-- Test Account: sb-tbt4q47331523@personal.example.com
-- Password: Nd8f=2>X
+- Client ID: YOUR_PAYPAL_CLIENT_ID
+- Client Secret: YOUR_PAYPAL_CLIENT_SECRET
+- Test Account: YOUR_PAYPAL_SANDBOX_EMAIL
+- Password: YOUR_PAYPAL_SANDBOX_PASSWORD
 
 ---
 
