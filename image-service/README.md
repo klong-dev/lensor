@@ -49,11 +49,13 @@ docker run -p 5000:5000 --env-file .env image-service
 ## API Endpoints
 
 ### Health Check
+
 ```
 GET /health
 ```
 
 ### Upload Single Image
+
 ```
 POST /upload/single
 Headers: Authorization: Bearer <JWT_TOKEN>
@@ -61,6 +63,7 @@ Body: FormData with 'file' field
 ```
 
 ### Upload Multiple Images
+
 ```
 POST /upload/multiple
 Headers: Authorization: Bearer <JWT_TOKEN>
@@ -68,6 +71,7 @@ Body: FormData with 'files' field (multiple)
 ```
 
 ### Serve Files
+
 ```
 GET /uploads/originals/<filename>
 GET /uploads/thumbnails/<filename>
@@ -90,6 +94,7 @@ JWT_SECRET=your_jwt_secret
 ## Response Format
 
 ### Success
+
 ```json
 {
   "success": true,
@@ -102,6 +107,7 @@ JWT_SECRET=your_jwt_secret
 ```
 
 ### Error
+
 ```json
 {
   "error": "Error message"
@@ -111,6 +117,7 @@ JWT_SECRET=your_jwt_secret
 ## Supported Formats
 
 ### RAW Formats
+
 - Canon: .cr2, .cr3
 - Sony: .arw
 - Nikon: .nef
@@ -119,6 +126,7 @@ JWT_SECRET=your_jwt_secret
 - Panasonic: .rw2
 
 ### Image Formats
+
 - JPEG: .jpg, .jpeg
 - PNG: .png
 - WebP: .webp
