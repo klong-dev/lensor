@@ -22,16 +22,20 @@ export const multerConfig: MulterOptions = {
       'image/x-fuji-raf',
       'image/x-adobe-dng',
       'image/x-panasonic-rw2',
-      // Some RAW files might come as application/octet-stream
-      'application/octet-stream',
+      // Preset files
+      'application/octet-stream', // .xmp, .dng presets
+      'application/xml', // .xmp files
+      'text/xml', // .xmp files
     ];
 
     const fileExt = file.originalname.split('.').pop()?.toLowerCase();
     const allowedExtensions = [
+      // Images
       'jpg',
       'jpeg',
       'png',
       'webp',
+      // RAW formats
       'cr2',
       'cr3',
       'arw',
@@ -39,6 +43,10 @@ export const multerConfig: MulterOptions = {
       'raf',
       'dng',
       'rw2',
+      // Preset files
+      'xmp', // Adobe Lightroom presets
+      'lrtemplate', // Lightroom templates
+      'dcp', // DNG Camera Profile
     ];
 
     if (

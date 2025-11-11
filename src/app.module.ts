@@ -21,6 +21,12 @@ import { UserFollowsModule } from './user-follows/user-follows.module';
 import { ProductsModule } from './products/products.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
+import { PostLikesModule } from './post-likes/post-likes.module';
+import { PostCommentsModule } from './post-comments/post-comments.module';
+import { CartModule } from './cart/cart.module';
+import { PaymentModule } from './payment/payment.module';
+import { OrdersModule } from './orders/orders.module';
+import { ChatModule } from './chat/chat.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -50,6 +56,12 @@ import jwtConfig from './config/jwt.config';
     ProductsModule,
     UploadsModule,
     UsersModule,
+    PostLikesModule,
+    PostCommentsModule,
+    CartModule,
+    PaymentModule,
+    OrdersModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [
