@@ -37,8 +37,94 @@ export class Product {
   @Column({ type: 'varchar', length: 500, nullable: true })
   thumbnail: string;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: 'text', nullable: true })
   imagePairs: string; // JSON string: [{before: '', after: ''}]
+
+  @Column({ type: 'text', nullable: true })
+  presetFiles: string; // JSON string array of preset file URLs (.xmp, .dng, .lrtemplate)
+
+  @Column({ type: 'jsonb', nullable: true })
+  imageMetadata: {
+    // Basic Image Info
+    width?: number;
+    height?: number;
+    dimensions?: string;
+    fileSize?: number;
+    format?: string;
+    colorSpace?: string;
+    bitDepth?: number;
+    dpi?: number;
+    orientation?: number;
+
+    // Camera Info
+    cameraMake?: string;
+    cameraModel?: string;
+    cameraSerialNumber?: string;
+
+    // Lens Info
+    lensMake?: string;
+    lensModel?: string;
+    lensSerialNumber?: string;
+    focalLength?: string;
+    focalLengthIn35mm?: string;
+
+    // Exposure Settings
+    iso?: number;
+    aperture?: string;
+    fStop?: string;
+    shutterSpeed?: string;
+    exposureTime?: string;
+    exposureMode?: string;
+    exposureProgram?: string;
+    exposureBias?: string;
+    meteringMode?: string;
+
+    // Flash & Lighting
+    flash?: string;
+    flashMode?: string;
+    whiteBalance?: string;
+    lightSource?: string;
+
+    // Other Settings
+    focusMode?: string;
+    focusDistance?: string;
+    dateTimeOriginal?: string;
+    dateTimeDigitized?: string;
+    dateTime?: string;
+    timezone?: string;
+
+    // Author & Copyright
+    artist?: string;
+    author?: string;
+    copyright?: string;
+
+    // Software & Processing
+    software?: string;
+    processingMethod?: string;
+
+    // GPS Location
+    gpsLatitude?: number;
+    gpsLongitude?: number;
+    gpsAltitude?: number;
+    gpsLocation?: string;
+
+    // Additional Info
+    contrast?: string;
+    saturation?: string;
+    sharpness?: string;
+    brightness?: string;
+    gainControl?: string;
+    digitalZoomRatio?: string;
+    sceneType?: string;
+    sceneCaptureType?: string;
+    subjectDistance?: string;
+    subjectDistanceRange?: string;
+
+    // RAW Processing
+    rawProcessing?: string;
+    toneMapping?: string;
+    colorGrading?: string;
+  };
 
   @Column({ type: 'decimal', precision: 2, scale: 1, default: 0 })
   rating: number;
@@ -47,16 +133,19 @@ export class Product {
   reviewCount: number;
 
   @Column({ type: 'int', default: 0 })
+  sellCount: number;
+
+  @Column({ type: 'int', default: 0 })
   downloads: number;
 
   @Column({ type: 'varchar', length: 100 })
   category: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  tags: string;
+  @Column({ type: 'text', nullable: true })
+  tags: string; // Comma-separated string
 
-  @Column({ type: 'simple-array', nullable: true })
-  compatibility: string;
+  @Column({ type: 'text', nullable: true })
+  compatibility: string; // Comma-separated string
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   fileFormat: string;
@@ -67,8 +156,8 @@ export class Product {
   @Column({ type: 'int', default: 0 })
   includesCount: number;
 
-  @Column({ type: 'simple-array', nullable: true })
-  features: string;
+  @Column({ type: 'text', nullable: true })
+  features: string; // Comma-separated string
 
   @Column({ type: 'text', nullable: true })
   specifications: string; // JSON string
