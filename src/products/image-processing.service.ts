@@ -1,8 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-// @ts-ignore
-// eslint-disable-next-line
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const FormData = require('form-data');
 
 @Injectable()
@@ -18,7 +17,7 @@ export class ImageProcessingService {
 
   /**
    * Process single image file (RAW or regular image)
-   * Returns paths for both original and thumbnail
+   * Returns paths for both original and thumbnail with full EXIF metadata
    */
   async processSingleImage(
     file: Express.Multer.File,
@@ -27,6 +26,87 @@ export class ImageProcessingService {
     original: string;
     thumbnail: string;
     filename: string;
+    metadata?: {
+      // Basic Image Info
+      width?: number;
+      height?: number;
+      dimensions?: string;
+      fileSize?: number;
+      format?: string;
+      colorSpace?: string;
+      bitDepth?: number;
+      dpi?: number;
+      orientation?: number;
+
+      // Camera Info
+      cameraMake?: string;
+      cameraModel?: string;
+      cameraSerialNumber?: string;
+
+      // Lens Info
+      lensMake?: string;
+      lensModel?: string;
+      lensSerialNumber?: string;
+      focalLength?: string;
+      focalLengthIn35mm?: string;
+
+      // Exposure Settings
+      iso?: number;
+      aperture?: string;
+      fStop?: string;
+      shutterSpeed?: string;
+      exposureTime?: string;
+      exposureMode?: string;
+      exposureProgram?: string;
+      exposureBias?: string;
+      meteringMode?: string;
+
+      // Flash & Lighting
+      flash?: string;
+      flashMode?: string;
+      whiteBalance?: string;
+      lightSource?: string;
+
+      // Other Settings
+      focusMode?: string;
+      focusDistance?: string;
+      dateTimeOriginal?: string;
+      dateTimeDigitized?: string;
+      dateTime?: string;
+      timezone?: string;
+
+      // Author & Copyright
+      artist?: string;
+      author?: string;
+      copyright?: string;
+
+      // Software & Processing
+      software?: string;
+      processingMethod?: string;
+
+      // GPS Location
+      gpsLatitude?: number;
+      gpsLongitude?: number;
+      gpsAltitude?: number;
+      gpsLocation?: string;
+
+      // Additional Info
+      contrast?: string;
+      saturation?: string;
+      sharpness?: string;
+      brightness?: string;
+      gainControl?: string;
+      digitalZoomRatio?: string;
+      sceneType?: string;
+      sceneCaptureType?: string;
+      subjectDistance?: string;
+      subjectDistanceRange?: string;
+
+      // RAW Processing
+      rawProcessing?: string;
+      toneMapping?: string;
+      colorGrading?: string;
+    };
   }> {
     try {
       const formData = new FormData();
@@ -118,6 +198,53 @@ export class ImageProcessingService {
         );
       }
       throw new BadRequestException('Failed to process images');
+    }
+  }
+
+  /**
+   * Upload preset file (without image processing)
+   * Accepts: .xmp, .lrtemplate, .dcp, .dng preset files
+   */
+  async uploadPresetFile(
+    file: Express.Multer.File,
+    authToken: string,
+  ): Promise<{
+    url: string;
+    filename: string;
+  }> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file.buffer, {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+
+      const response = await axios.post(
+        `${this.imageServiceUrl}/upload/preset`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${authToken}`,
+          },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        },
+      );
+
+      if (!response.data.success) {
+        throw new BadRequestException('Preset file upload failed');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      this.logger.error('Error uploading preset file:', error);
+      if (axios.isAxiosError(error)) {
+        throw new BadRequestException(
+          error.response?.data?.error || 'Failed to upload preset file',
+        );
+      }
+      throw new BadRequestException('Failed to upload preset file');
     }
   }
 
