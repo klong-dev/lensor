@@ -26,6 +26,8 @@ import { PostCommentsModule } from './post-comments/post-comments.module';
 import { CartModule } from './cart/cart.module';
 import { PaymentModule } from './payment/payment.module';
 import { OrdersModule } from './orders/orders.module';
+import { WalletModule } from './wallet/wallet.module';
+import { PaymentHistoryModule } from './payment-history/payment-history.module';
 import { ChatModule } from './chat/chat.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
@@ -61,6 +63,8 @@ import jwtConfig from './config/jwt.config';
     CartModule,
     PaymentModule,
     OrdersModule,
+    WalletModule,
+    PaymentHistoryModule,
     ChatModule,
   ],
   controllers: [AppController],

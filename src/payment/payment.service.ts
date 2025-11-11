@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrdersService } from '../orders/orders.service';
+import { WalletService } from '../wallet/wallet.service';
+import { PaymentHistoryService } from '../payment-history/payment-history.service';
 import * as crypto from 'crypto';
 import {
   Client,
@@ -19,6 +21,8 @@ export class PaymentService {
 
   constructor(
     private ordersService: OrdersService,
+    private walletService: WalletService,
+    private paymentHistoryService: PaymentHistoryService,
     private configService: ConfigService,
   ) {
     // Initialize PayPal Client
@@ -177,6 +181,50 @@ export class PaymentService {
     const responseCode = params.vnp_ResponseCode;
     const status = responseCode === '00' ? 'completed' : 'failed';
     const transactionNo = params.vnp_TransactionNo;
+    const amount = parseInt(params.vnp_Amount) / 100; // Convert from VND cents to VND
+
+    // Get order to find userId
+    const order = await this.ordersService.getOrderById(orderId);
+    const userId = order.userId;
+
+    // Get wallet balance before transaction
+    const balanceBefore = await this.walletService.getBalance(userId);
+
+    // Create payment history record
+    const paymentHistory = await this.paymentHistoryService.createHistory({
+      userId,
+      orderId,
+      paymentMethod: 'vnpay',
+      transactionType: 'deposit',
+      amount,
+      status,
+      transactionId: transactionNo,
+      description: `VNPay deposit - Order #${orderId}`,
+      metadata: {
+        vnpayResponse: params,
+      },
+      balanceBefore,
+      balanceAfter: balanceBefore, // Will update after adding balance
+    });
+
+    // If payment successful, add money to wallet
+    if (status === 'completed') {
+      await this.walletService.addBalance(
+        userId,
+        amount,
+        `VNPay deposit - Order #${orderId}`,
+      );
+
+      const balanceAfter = await this.walletService.getBalance(userId);
+
+      // Update payment history with new balance
+      await this.paymentHistoryService.updateStatus(
+        paymentHistory.id,
+        'completed',
+        transactionNo,
+        { balanceAfter },
+      );
+    }
 
     // Update order status
     await this.ordersService.updateOrderStatus(orderId, status, transactionNo);
@@ -185,6 +233,12 @@ export class PaymentService {
       success: status === 'completed',
       orderId,
       responseCode,
+      amount,
+      balanceBefore,
+      balanceAfter:
+        status === 'completed'
+          ? await this.walletService.getBalance(userId)
+          : balanceBefore,
       message: responseCode === '00' ? 'Payment successful' : 'Payment failed',
     };
   }
@@ -275,6 +329,50 @@ export class PaymentService {
       const transactionId =
         response.result.purchaseUnits?.[0]?.payments?.captures?.[0]?.id || null;
 
+      // Get order to find userId and amount
+      const order = await this.ordersService.getOrderById(orderId);
+      const userId = order.userId;
+      const amount = Number(order.totalAmount);
+
+      // Get wallet balance before transaction
+      const balanceBefore = await this.walletService.getBalance(userId);
+
+      // Create payment history record
+      const paymentHistory = await this.paymentHistoryService.createHistory({
+        userId,
+        orderId,
+        paymentMethod: 'paypal',
+        transactionType: 'deposit',
+        amount,
+        status,
+        transactionId,
+        description: `PayPal deposit - Order #${orderId}`,
+        metadata: {
+          paypalResponse: response.result,
+        },
+        balanceBefore,
+        balanceAfter: balanceBefore,
+      });
+
+      // If payment successful, add money to wallet
+      if (status === 'completed') {
+        await this.walletService.addBalance(
+          userId,
+          amount,
+          `PayPal deposit - Order #${orderId}`,
+        );
+
+        const balanceAfter = await this.walletService.getBalance(userId);
+
+        // Update payment history with new balance
+        await this.paymentHistoryService.updateStatus(
+          paymentHistory.id,
+          'completed',
+          transactionId,
+          { balanceAfter },
+        );
+      }
+
       // Update order status
       await this.ordersService.updateOrderStatus(
         orderId,
@@ -288,6 +386,12 @@ export class PaymentService {
         paypalOrderId,
         transactionId,
         status: captureStatus,
+        amount,
+        balanceBefore,
+        balanceAfter:
+          status === 'completed'
+            ? await this.walletService.getBalance(userId)
+            : balanceBefore,
         message:
           status === 'completed'
             ? 'Payment captured successfully'

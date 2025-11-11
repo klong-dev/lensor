@@ -39,6 +39,12 @@ export class OrdersService {
     });
   }
 
+  async getOrderById(orderId: string) {
+    return await this.orderRepository.findOne({
+      where: { id: orderId },
+    });
+  }
+
   async updateOrderStatus(
     orderId: string,
     status: string,
