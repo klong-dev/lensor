@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
@@ -57,7 +57,7 @@ export class ProductsService {
 
   async findAll() {
     const products = await this.productRepository.find({
-      where: { deletedAt: null },
+      where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
 
@@ -74,6 +74,7 @@ export class ProductsService {
           thumbnail:
             product.thumbnail || product.image || '/images/default-product.jpg',
           author: {
+            id: author?.id || product.userId,
             name: author?.name || author?.email || 'Unknown User',
             avatar: author?.avatar_url || '/images/default_avatar.jpg',
           },
@@ -86,9 +87,41 @@ export class ProductsService {
     );
   }
 
+  async findByUser(userId: string) {
+    const products = await this.productRepository.find({
+      where: { userId, deletedAt: IsNull() },
+      order: { createdAt: 'DESC' },
+    });
+
+    return Promise.all(
+      products.map(async (product) => {
+        return {
+          id: product.id,
+          title: product.title,
+          description: product.description,
+          price: Number(product.price),
+          originalPrice: product.originalPrice
+            ? Number(product.originalPrice)
+            : Number(product.price),
+          discount: product.discount,
+          image: product.image || '/images/default-product.jpg',
+          thumbnail:
+            product.thumbnail || product.image || '/images/default-product.jpg',
+          rating: Number(product.rating),
+          reviewCount: product.reviewCount,
+          sellCount: product.sellCount,
+          downloads: product.downloads,
+          category: product.category,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+        };
+      }),
+    );
+  }
+
   async findOne(id: string) {
     const product = await this.productRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
       relations: ['reviews'],
     });
 
@@ -100,7 +133,7 @@ export class ProductsService {
 
     // Count total products by this author
     const totalProducts = await this.productRepository.count({
-      where: { userId: product.userId, deletedAt: null },
+      where: { userId: product.userId, deletedAt: IsNull() },
     });
 
     // Parse JSON fields
@@ -183,7 +216,7 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto, userId: string) {
     const product = await this.productRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
     });
 
     if (!product) {
@@ -229,7 +262,7 @@ export class ProductsService {
 
   async remove(id: string, userId: string) {
     const product = await this.productRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
     });
 
     if (!product) {
@@ -253,7 +286,7 @@ export class ProductsService {
     comment: string,
   ) {
     const product = await this.productRepository.findOne({
-      where: { id: productId, deletedAt: null },
+      where: { id: productId, deletedAt: IsNull() },
     });
 
     if (!product) {
@@ -281,7 +314,7 @@ export class ProductsService {
 
   private async updateProductRating(productId: string) {
     const reviews = await this.reviewRepository.find({
-      where: { productId, deletedAt: null },
+      where: { productId, deletedAt: IsNull() },
     });
 
     const totalRating = reviews.reduce(
