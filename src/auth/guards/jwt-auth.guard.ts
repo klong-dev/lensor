@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -39,7 +43,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     // For protected routes, throw error if authentication fails
     if (err || !user) {
-      throw err || new Error('Unauthorized');
+      throw err || new UnauthorizedException();
     }
 
     return user;
