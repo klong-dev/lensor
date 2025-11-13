@@ -175,6 +175,12 @@ export class ProductsController {
     return { data: products };
   }
 
+  @Get('products/me')
+  async findMyProducts(@CurrentUser() user: { userId: string; email: string }) {
+    const products = await this.productsService.findByUser(user.userId);
+    return { data: products };
+  }
+
   @Get('products/:id')
   @Public()
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
