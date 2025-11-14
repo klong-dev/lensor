@@ -82,7 +82,7 @@ export class PostsService {
               : 'Deleted User',
             avatarUrl: post_owner
               ? post_owner.user_metadata.picture ||
-                post_owner.avatar_url ||
+                post_owner.user_metadata.avatar_url ||
                 '/images/default_avatar.jpg'
               : '/images/deleted_user.jpg',
             isFollowed,

@@ -37,8 +37,9 @@ export class PostCommentsService {
     const user = await this.supabaseService.getUserById(userId);
     savedComment.user = {
       id: userId,
-      name: user?.name || user?.email || 'Unknown User',
-      avatarUrl: user?.avatar_url || '/images/default_avatar.jpg',
+      name: user?.user_metadata?.name || user?.email || 'Unknown User',
+      avatarUrl:
+        user?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
     };
 
     return savedComment;
@@ -61,8 +62,9 @@ export class PostCommentsService {
           ...comment,
           user: {
             id: comment.userId,
-            name: user?.name || user?.email || 'Unknown User',
-            avatarUrl: user?.avatar_url || '/images/default_avatar.jpg',
+            name: user?.user_metadata?.name || user?.email || 'Unknown User',
+            avatarUrl:
+              user?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
           },
         };
       }),
