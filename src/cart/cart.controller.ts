@@ -64,4 +64,10 @@ export class CartController {
     await this.cartService.clearCart(user.userId);
     return { message: 'Cart cleared' };
   }
+
+  @Post('checkout')
+  async checkout(@CurrentUser() user: { userId: string }) {
+    // This will be handled by OrdersService
+    return { message: 'Use POST /orders/checkout instead' };
+  }
 }

@@ -66,21 +66,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: SendMessageDto & { userId: string },
   ) {
-    const message = await this.chatService.sendMessage(data.userId, {
+    await this.chatService.sendMessage(data.userId, {
       roomId: data.roomId,
       content: data.content,
     });
 
-    // Broadcast to all clients in the room
-    this.server.to(data.roomId).emit('newMessage', {
-      id: message.id,
-      roomId: message.roomId,
-      userId: message.userId,
-      content: message.content,
-      createdAt: message.createdAt,
-    });
+    // Get user info for the message
+    const messageData = await this.chatService.getMessages(data.roomId, 1);
+    const latestMessage = messageData[0];
 
-    return { success: true, message };
+    // Broadcast to all clients in the room
+    this.server.to(data.roomId).emit('newMessage', latestMessage);
+
+    return { success: true, message: latestMessage };
   }
 
   @SubscribeMessage('typing')

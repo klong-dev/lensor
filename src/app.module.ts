@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,6 +30,7 @@ import { OrdersModule } from './orders/orders.module';
 import { WalletModule } from './wallet/wallet.module';
 import { PaymentHistoryModule } from './payment-history/payment-history.module';
 import { ChatModule } from './chat/chat.module';
+import { ReportsModule } from './reports/reports.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -39,6 +41,7 @@ import jwtConfig from './config/jwt.config';
       envFilePath: '.env.local',
       load: [databaseConfig, jwtConfig],
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       inject: ['CONFIGURATION(database)'],
       useFactory: (config: ReturnType<typeof databaseConfig>) => config,
@@ -66,6 +69,7 @@ import jwtConfig from './config/jwt.config';
     WalletModule,
     PaymentHistoryModule,
     ChatModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

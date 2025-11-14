@@ -198,7 +198,7 @@ export class ProductsService {
       thumbnail: product.thumbnail,
       imagePairs: imagePairs ? JSON.parse(JSON.stringify(imagePairs)) : [],
       imageMetadata: product.imageMetadata || null,
-      presetFiles: presetFiles,
+      // presetFiles removed - only available after purchase
       category: product.category,
       tags,
       compatibility,
@@ -276,6 +276,78 @@ export class ProductsService {
     }
 
     await this.productRepository.update(id, { deletedAt: new Date() });
+  }
+
+  async findOneWithDownloadLinks(id: string) {
+    const product = await this.productRepository.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    const author = await this.supabaseService.getUserById(product.userId);
+
+    // Parse JSON fields
+    const imagePairs = product.imagePairs ? JSON.parse(product.imagePairs) : [];
+    const presetFiles = product.presetFiles
+      ? JSON.parse(product.presetFiles)
+      : [];
+    const tags = Array.isArray(product.tags)
+      ? product.tags
+      : product.tags
+        ? String(product.tags).split(',')
+        : [];
+    const compatibility = Array.isArray(product.compatibility)
+      ? product.compatibility
+      : product.compatibility
+        ? String(product.compatibility).split(',')
+        : [];
+    const features = Array.isArray(product.features)
+      ? product.features
+      : product.features
+        ? String(product.features).split(',')
+        : [];
+    const specifications = product.specifications
+      ? JSON.parse(product.specifications)
+      : {};
+    const warranty = product.warranty ? JSON.parse(product.warranty) : {};
+
+    return {
+      id: product.id,
+      name: product.title,
+      description: product.description,
+      price: Number(product.price),
+      originalPrice: product.originalPrice
+        ? Number(product.originalPrice)
+        : Number(product.price),
+      discount: product.discount,
+      rating: Number(product.rating),
+      reviewCount: product.reviewCount,
+      downloads: product.downloads,
+      sellCount: product.sellCount,
+      author: {
+        name: author?.name || author?.email || 'Unknown User',
+        avatar: author?.avatar_url || '/images/default_avatar.jpg',
+      },
+      image: product.image,
+      thumbnail: product.thumbnail,
+      imagePairs,
+      imageMetadata: product.imageMetadata || null,
+      presetFiles, // Include preset files for download
+      category: product.category,
+      tags,
+      compatibility,
+      fileFormat: product.fileFormat,
+      fileSize: product.fileSize,
+      includesCount: product.includesCount,
+      features,
+      specifications,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+      warranty,
+    };
   }
 
   // Review methods
