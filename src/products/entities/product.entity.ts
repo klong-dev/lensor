@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ProductReview } from './product-review.entity';
 
@@ -15,6 +17,10 @@ export class Product {
 
   @Column('uuid')
   userId: string;
+
+  @ManyToOne('User', { nullable: false })
+  @JoinColumn({ name: 'userId' })
+  owner: { id: string; name: string };
 
   @Column({ type: 'varchar', length: 255 })
   title: string;

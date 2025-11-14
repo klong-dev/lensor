@@ -15,7 +15,26 @@ export class CartService {
   async getCart(userId: string) {
     const items = await this.cartItemRepository.find({
       where: { userId },
-      relations: ['product'],
+      relations: ['product', 'product.owner'],
+      select: {
+        product: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          originalPrice: true,
+          discount: true,
+          image: true,
+          thumbnail: true,
+          rating: true,
+          reviewCount: true,
+          category: true,
+          owner: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       order: { createdAt: 'DESC' },
     });
 
@@ -104,7 +123,26 @@ export class CartService {
   async getCartItems(userId: string) {
     return await this.cartItemRepository.find({
       where: { userId },
-      relations: ['product'],
+      relations: ['product', 'product.owner'],
+      select: {
+        product: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          originalPrice: true,
+          discount: true,
+          image: true,
+          thumbnail: true,
+          rating: true,
+          reviewCount: true,
+          category: true,
+          owner: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
   }
 }

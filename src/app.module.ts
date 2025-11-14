@@ -31,6 +31,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { PaymentHistoryModule } from './payment-history/payment-history.module';
 import { ChatModule } from './chat/chat.module';
 import { ReportsModule } from './reports/reports.module';
+import { AdminModule } from './admin/admin.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -70,6 +71,7 @@ import jwtConfig from './config/jwt.config';
     PaymentHistoryModule,
     ChatModule,
     ReportsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
