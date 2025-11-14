@@ -71,7 +71,7 @@ export class PaymentController {
     const result = await this.paymentService.verifyVNPayCallback(query);
     return res
       .status(200)
-      .json({ data: { success: result.success, orderId: result.orderId } });
+      .json({ data: { success: result.success, txnRef: result.txnRef } });
   }
 
   @Get('vnpay-ipn')
@@ -100,9 +100,9 @@ export class PaymentController {
   @Get('paypal-return')
   @Public()
   async paypalReturn(@Query() query: any, @Res() res: Response) {
-    const { token, orderId } = query;
+    const { token, userId } = query;
 
-    if (!token || !orderId) {
+    if (!token || !userId) {
       return res.redirect(
         `http://localhost:3000/payment/failed?error=missing_params`,
       );
@@ -111,17 +111,17 @@ export class PaymentController {
     try {
       const result = await this.paymentService.capturePayPalPayment(
         token,
-        orderId,
+        userId,
       );
 
       const redirectUrl = result.success
-        ? `http://localhost:3000/payment/success?orderId=${result.orderId}&transactionId=${result.transactionId}`
-        : `http://localhost:3000/payment/failed?orderId=${result.orderId}&message=${result.message}`;
+        ? `http://localhost:3000/payment/success?transactionId=${result.transactionId}&amount=${result.amount}`
+        : `http://localhost:3000/payment/failed?message=${result.message}`;
 
       return res.redirect(redirectUrl);
     } catch (error) {
       return res.redirect(
-        `http://localhost:3000/payment/failed?orderId=${orderId}&error=${error.message}`,
+        `http://localhost:3000/payment/failed?error=${error.message}`,
       );
     }
   }
@@ -129,16 +129,8 @@ export class PaymentController {
   @Get('paypal-cancel')
   @Public()
   async paypalCancel(@Query() query: any, @Res() res: Response) {
-    const { orderId } = query;
-
-    if (orderId) {
-      // Update order status to cancelled
-      // await this.ordersService.updateOrderStatus(orderId, 'cancelled', null);
-    }
-
-    return res.redirect(
-      `http://localhost:3000/payment/cancelled?orderId=${orderId || 'unknown'}`,
-    );
+    // Payment cancelled by user
+    return res.redirect(`http://localhost:3000/payment/cancelled`);
   }
 
   // Verify payment status (for frontend after redirect)
@@ -148,33 +140,38 @@ export class PaymentController {
     const result = await this.paymentService.verifyVNPayCallback(body);
     return {
       success: result.success,
-      orderId: result.orderId,
+      txnRef: result.txnRef,
       responseCode: result.responseCode,
+      amount: result.amount,
+      balanceBefore: result.balanceBefore,
+      balanceAfter: result.balanceAfter,
       message: result.message,
     };
   }
 
   @Post('verify-paypal')
   @Public()
-  async verifyPayPalPayment(@Body() body: { token: string; orderId: string }) {
-    const { token, orderId } = body;
+  async verifyPayPalPayment(@Body() body: { token: string; userId: string }) {
+    const { token, userId } = body;
 
-    if (!token || !orderId) {
+    if (!token || !userId) {
       return {
         success: false,
-        message: 'Missing token or orderId',
+        message: 'Missing token or userId',
       };
     }
 
     const result = await this.paymentService.capturePayPalPayment(
       token,
-      orderId,
+      userId,
     );
 
     return {
       success: result.success,
-      orderId: result.orderId,
       transactionId: result.transactionId,
+      amount: result.amount,
+      balanceBefore: result.balanceBefore,
+      balanceAfter: result.balanceAfter,
       message: result.message,
     };
   }
