@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { CartService } from '../cart/cart.service';
@@ -72,6 +72,40 @@ export class OrdersService {
     return soldOrders;
   }
 
+  async getReadyForWithdrawal(sellerId: string) {
+    // Find all orders that are ready for withdrawal
+    const allOrders = await this.orderRepository.find({
+      where: { status: 'ready_for_withdrawal', canWithdraw: true },
+      order: { createdAt: 'DESC' },
+    });
+
+    // Filter orders that contain seller's products
+    const withdrawableOrders = allOrders
+      .map((order) => {
+        const orderItems = Array.isArray(order.items) ? order.items : [];
+        const sellerItems = orderItems.filter(
+          (item: any) => item.sellerId === sellerId,
+        );
+
+        if (sellerItems.length === 0) return null;
+
+        // Calculate seller's earnings from this order
+        const sellerEarnings = sellerItems.reduce(
+          (sum: number, item: any) => sum + (item.subtotal || 0),
+          0,
+        );
+
+        return {
+          ...order,
+          sellerItems, // Only items sold by this seller
+          sellerEarnings, // Total earnings from this order
+        };
+      })
+      .filter((order) => order !== null);
+
+    return withdrawableOrders;
+  }
+
   async getOrder(orderId: string, userId: string) {
     return await this.orderRepository.findOne({
       where: { id: orderId, userId },
@@ -90,6 +124,16 @@ export class OrdersService {
     transactionId?: string,
   ) {
     await this.orderRepository.update(orderId, { status, transactionId });
+  }
+
+  async getOrdersByIds(orderIds: string[]) {
+    return await this.orderRepository.find({
+      where: { id: In(orderIds) },
+    });
+  }
+
+  async updateOrdersStatus(orderIds: string[], status: string) {
+    await this.orderRepository.update({ id: In(orderIds) }, { status });
   }
 
   async checkoutCart(userId: string) {
