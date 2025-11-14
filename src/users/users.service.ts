@@ -1,16 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { SupabaseService } from '../supabase/supabase.service';
 import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Post } from '../posts/entities/post.entity';
+import { Product } from '../products/entities/product.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+  ) {}
 
   /**
-   * Get user by ID from Supabase Auth
+   * Get user by ID from Supabase Auth with posts and products
    */
-  async findById(userId: string): Promise<UserDto> {
+  async findById(userId: string): Promise<any> {
     try {
       const supabase = this.supabaseService.getClient();
       const { data, error } = await supabase.auth.admin.getUserById(userId);
@@ -19,7 +29,46 @@ export class UsersService {
         throw new NotFoundException(`User with ID ${userId} not found`);
       }
 
-      return this.mapToUserDto(data.user);
+      // Get user's posts
+      const posts = await this.postRepository.find({
+        where: { userId, deletedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+        take: 10, // Limit to 10 recent posts
+      });
+
+      // Get user's products
+      const products = await this.productRepository.find({
+        where: { userId, deletedAt: IsNull() },
+        order: { createdAt: 'DESC' },
+        take: 10, // Limit to 10 recent products
+      });
+
+      const userDto = this.mapToUserDto(data.user);
+
+      return {
+        ...userDto,
+        posts: posts.map((post) => ({
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          imageUrl: post.imageUrl,
+          thumbnailUrl: post.thumbnailUrl,
+          isNSFW: post.isNSFW,
+          createdAt: post.createdAt,
+        })),
+        products: products.map((product) => ({
+          id: product.id,
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          thumbnail: product.thumbnail,
+          rating: product.rating,
+          reviewCount: product.reviewCount,
+          sellCount: product.sellCount,
+          createdAt: product.createdAt,
+        })),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

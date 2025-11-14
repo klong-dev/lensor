@@ -191,6 +191,7 @@ export class ProductsService {
       downloads: product.downloads,
       sellCount: product.sellCount,
       author: {
+        id: author?.id || product.userId,
         name: author?.user_metadata?.name || author?.email || 'Unknown User',
         avatar:
           author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
