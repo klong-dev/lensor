@@ -25,29 +25,44 @@ export class UploadsController {
         });
       }
 
-      // Get image from Python service
-      const imageBuffer = await this.imageProcessingService.getImage(
+      // Get file from Python service
+      const fileBuffer = await this.imageProcessingService.getImage(
         `${folder}/${filename}`,
       );
 
       // Determine content type from filename
       const ext = filename.split('.').pop()?.toLowerCase();
-      const contentType =
-        ext === 'jpg' || ext === 'jpeg'
-          ? 'image/jpeg'
-          : ext === 'png'
-            ? 'image/png'
-            : ext === 'webp'
-              ? 'image/webp'
-              : 'image/jpeg';
+      let contentType: string;
 
-      // Send image
+      // Image formats
+      if (ext === 'jpg' || ext === 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (ext === 'png') {
+        contentType = 'image/png';
+      } else if (ext === 'webp') {
+        contentType = 'image/webp';
+      }
+      // Preset formats
+      else if (ext === 'xmp') {
+        contentType = 'application/xml';
+      } else if (ext === 'lrtemplate') {
+        contentType = 'application/octet-stream';
+      } else if (ext === 'dcp') {
+        contentType = 'application/octet-stream';
+      } else if (ext === 'dng') {
+        contentType = 'image/x-adobe-dng';
+      } else {
+        contentType = 'application/octet-stream';
+      }
+
+      // Send file
       res.set({
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'public, max-age=31536000',
       });
 
-      res.send(imageBuffer);
+      res.send(fileBuffer);
     } catch (error) {
       console.error('Error serving file:', error);
       return res.status(HttpStatus.NOT_FOUND).json({
