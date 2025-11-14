@@ -87,14 +87,17 @@ export class VisionService {
       });
 
       // Consider image NSFW if:
-      // - adult content is LIKELY or VERY_LIKELY
+      // - adult content is POSSIBLE, LIKELY or VERY_LIKELY
       // - violence content is LIKELY or VERY_LIKELY
-      // - racy content is VERY_LIKELY
+      // - racy content is POSSIBLE, LIKELY or VERY_LIKELY (more strict for suggestive content)
       const isNSFW =
+        safeSearch.adult === 'POSSIBLE' ||
         safeSearch.adult === 'LIKELY' ||
         safeSearch.adult === 'VERY_LIKELY' ||
         safeSearch.violence === 'LIKELY' ||
         safeSearch.violence === 'VERY_LIKELY' ||
+        safeSearch.racy === 'POSSIBLE' ||
+        safeSearch.racy === 'LIKELY' ||
         safeSearch.racy === 'VERY_LIKELY';
 
       this.logger.log(`Image ${imageUrl} NSFW check: ${isNSFW}`);
