@@ -8,6 +8,7 @@ import { SupabaseService } from '../supabase/supabase.service';
 import { UserFollowsService } from '../user-follows/user-follows.service';
 import { PostLikesService } from '../post-likes/post-likes.service';
 import { PostCommentsService } from '../post-comments/post-comments.service';
+import { VisionService } from '../vision/vision.service';
 
 @Injectable()
 export class PostsService {
@@ -18,6 +19,7 @@ export class PostsService {
     private userFollowsService: UserFollowsService,
     private postLikesService: PostLikesService,
     private postCommentsService: PostCommentsService,
+    private visionService: VisionService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -26,7 +28,28 @@ export class PostsService {
       userId,
     });
 
-    return this.postRepository.save(post);
+    const savedPost = await this.postRepository.save(post);
+
+    // Check NSFW asynchronously (don't block response)
+    if (savedPost.imageUrl) {
+      this.checkAndUpdateNSFW(savedPost.id, savedPost.imageUrl).catch((err) =>
+        console.error('NSFW check failed:', err),
+      );
+    }
+
+    return savedPost;
+  }
+
+  private async checkAndUpdateNSFW(
+    postId: string,
+    imageUrl: string,
+  ): Promise<void> {
+    try {
+      const isNSFW = await this.visionService.checkImageNSFW(imageUrl);
+      await this.postRepository.update(postId, { isNSFW });
+    } catch (error) {
+      console.error(`Failed to update NSFW status for post ${postId}:`, error);
+    }
   }
 
   async findAll(currentUserId?: string) {
@@ -92,6 +115,7 @@ export class PostsService {
           imageUrl: post.imageUrl,
           thumbnailUrl: post.thumbnailUrl,
           imageMetadata: post.imageMetadata || null,
+          isNSFW: post.isNSFW,
           voteCount,
           isLiked,
           commentCount,
@@ -158,6 +182,7 @@ export class PostsService {
       imageUrl: post.imageUrl,
       thumbnailUrl: post.thumbnailUrl,
       imageMetadata: post.imageMetadata || null,
+      isNSFW: post.isNSFW,
       voteCount,
       isLiked,
       commentCount,
@@ -180,8 +205,22 @@ export class PostsService {
       );
     }
 
+    const oldImageUrl = post.imageUrl;
     Object.assign(post, updatePostDto);
-    return this.postRepository.save(post);
+    const updatedPost = await this.postRepository.save(post);
+
+    // Check NSFW if image URL changed
+    if (
+      updatePostDto.imageUrl &&
+      updatePostDto.imageUrl !== oldImageUrl &&
+      updatedPost.imageUrl
+    ) {
+      this.checkAndUpdateNSFW(updatedPost.id, updatedPost.imageUrl).catch(
+        (err) => console.error('NSFW check failed:', err),
+      );
+    }
+
+    return updatedPost;
   }
 
   async remove(id: string, userId: string): Promise<void> {

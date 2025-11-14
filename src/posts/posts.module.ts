@@ -7,6 +7,7 @@ import { SupabaseModule } from '../supabase/supabase.module';
 import { UserFollowsModule } from '../user-follows/user-follows.module';
 import { PostLikesModule } from '../post-likes/post-likes.module';
 import { PostCommentsModule } from '../post-comments/post-comments.module';
+import { VisionModule } from '../vision/vision.module';
 import { ImageProcessingService } from '../products/image-processing.service';
 
 @Module({
@@ -16,6 +17,7 @@ import { ImageProcessingService } from '../products/image-processing.service';
     UserFollowsModule,
     PostLikesModule,
     PostCommentsModule,
+    VisionModule,
   ],
   controllers: [PostsController],
   providers: [PostsService, ImageProcessingService],
