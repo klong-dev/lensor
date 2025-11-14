@@ -40,4 +40,25 @@ export class UploadController {
       },
     };
   }
+
+  @Post('evidence')
+  @UseInterceptors(FilesInterceptor('files', 5)) // Max 5 evidence files
+  async uploadEvidence(
+    @CurrentUser('userId') userId: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    // Generate temporary reportId (will be replaced with actual reportId after report creation)
+    const tempReportId = `temp_${Date.now()}`;
+    const urls = await this.uploadService.uploadEvidenceFiles(
+      files,
+      userId,
+      tempReportId,
+    );
+    return {
+      data: {
+        urls,
+      },
+      message: 'Evidence files uploaded successfully',
+    };
+  }
 }

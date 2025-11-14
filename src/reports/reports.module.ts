@@ -7,6 +7,7 @@ import { Report } from './entities/report.entity';
 import { OrdersModule } from '../orders/orders.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     OrdersModule,
     WalletModule,
     NotificationsModule,
+    UploadModule,
   ],
   controllers: [ReportsController, AdminReportsController],
   providers: [ReportsService],
