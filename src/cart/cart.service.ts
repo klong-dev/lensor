@@ -89,4 +89,22 @@ export class CartService {
   async clearCart(userId: string) {
     await this.cartItemRepository.delete({ userId });
   }
+
+  async getCartTotal(userId: string): Promise<number> {
+    const items = await this.cartItemRepository.find({
+      where: { userId },
+    });
+
+    return items.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
+  }
+
+  async getCartItems(userId: string) {
+    return await this.cartItemRepository.find({
+      where: { userId },
+      relations: ['product'],
+    });
+  }
 }

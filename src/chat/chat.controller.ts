@@ -26,6 +26,18 @@ export class ChatController {
     return { data: room };
   }
 
+  @Post('direct/:userId')
+  async getOrCreateDirectRoom(
+    @Param('userId') otherUserId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const room = await this.chatService.getOrCreateDirectRoom(
+      user.userId,
+      otherUserId,
+    );
+    return { data: room };
+  }
+
   @Get('rooms')
   async getRooms(@CurrentUser() user: { userId: string }) {
     const rooms = await this.chatService.getRooms(user.userId);
@@ -48,5 +60,14 @@ export class ChatController {
       limit ? parseInt(limit) : 50,
     );
     return { data: messages };
+  }
+
+  @Post('rooms/:id/read')
+  async markRoomAsRead(
+    @Param('id') roomId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    await this.chatService.markRoomMessagesAsRead(roomId, user.userId);
+    return { data: { success: true } };
   }
 }

@@ -80,4 +80,32 @@ export class NotificationsService {
       where: { userId, read: false },
     });
   }
+
+  // Helper method for creating notifications easily
+  async createNotification(
+    userId: string,
+    type: string,
+    title: string,
+    message: string,
+    metadata?: any,
+    actionUrl?: string,
+  ) {
+    const notification = this.notificationRepository.create({
+      userId,
+      type,
+      title,
+      message,
+      action: title, // Keep backward compatibility
+      metadata,
+      actionUrl,
+      targetId: metadata?.orderId || metadata?.reportId || null,
+      targetType: metadata?.orderId
+        ? 'order'
+        : metadata?.reportId
+          ? 'report'
+          : null,
+    });
+
+    return await this.notificationRepository.save(notification);
+  }
 }
