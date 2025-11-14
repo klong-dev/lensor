@@ -91,13 +91,8 @@ export class PaymentService {
     orderInfo: string,
     ipAddr: string = '127.0.0.1',
   ) {
-    // Create order first
-    const order = await this.ordersService.createOrder(
-      userId,
-      [],
-      amount,
-      'vnpay',
-    );
+    // Generate unique transaction reference
+    const txnRef = `VNPAY_${userId}_${Date.now()}`;
 
     // Get current date in VNPay format: yyyyMMddHHmmss
     const date = new Date();
@@ -115,7 +110,7 @@ export class PaymentService {
       this.configService.get<string>('VNPAY_RETURN_URL') ||
       'http://localhost:3005/payment/vnpay-return';
 
-    const orderInfoText = orderInfo || `Thanh toan don hang ${order.id}`;
+    const orderInfoText = orderInfo || `Nap tien vao vi ${amount} VND`;
 
     // All params for payment request (before adding vnp_SecureHash)
     const params: any = {
@@ -130,7 +125,7 @@ export class PaymentService {
       vnp_OrderInfo: orderInfoText,
       vnp_OrderType: 'other',
       vnp_ReturnUrl: returnUrl,
-      vnp_TxnRef: order.id,
+      vnp_TxnRef: txnRef,
     };
 
     // Create secure hash from all params (using raw values)
@@ -156,7 +151,7 @@ export class PaymentService {
 
     return {
       paymentUrl,
-      orderId: order.id,
+      txnRef,
       params,
     };
   }
@@ -177,15 +172,14 @@ export class PaymentService {
       };
     }
 
-    const orderId = params.vnp_TxnRef;
+    const txnRef = params.vnp_TxnRef;
     const responseCode = params.vnp_ResponseCode;
     const status = responseCode === '00' ? 'completed' : 'failed';
     const transactionNo = params.vnp_TransactionNo;
     const amount = parseInt(params.vnp_Amount) / 100; // Convert from VND cents to VND
 
-    // Get order to find userId
-    const order = await this.ordersService.getOrderById(orderId);
-    const userId = order.userId;
+    // Extract userId from txnRef (format: VNPAY_userId_timestamp)
+    const userId = txnRef.split('_')[1];
 
     // Get wallet balance before transaction
     const balanceBefore = await this.walletService.getBalance(userId);
@@ -193,15 +187,16 @@ export class PaymentService {
     // Create payment history record
     const paymentHistory = await this.paymentHistoryService.createHistory({
       userId,
-      orderId,
+      orderId: null, // No order for wallet deposit
       paymentMethod: 'vnpay',
       transactionType: 'deposit',
       amount,
       status,
       transactionId: transactionNo,
-      description: `VNPay deposit - Order #${orderId}`,
+      description: `VNPay deposit ${amount.toLocaleString()} VND`,
       metadata: {
         vnpayResponse: params,
+        txnRef,
       },
       balanceBefore,
       balanceAfter: balanceBefore, // Will update after adding balance
@@ -212,7 +207,7 @@ export class PaymentService {
       await this.walletService.addBalance(
         userId,
         amount,
-        `VNPay deposit - Order #${orderId}`,
+        `VNPay deposit ${amount.toLocaleString()} VND`,
       );
 
       const balanceAfter = await this.walletService.getBalance(userId);
@@ -226,12 +221,9 @@ export class PaymentService {
       );
     }
 
-    // Update order status
-    await this.ordersService.updateOrderStatus(orderId, status, transactionNo);
-
     return {
       success: status === 'completed',
-      orderId,
+      txnRef,
       responseCode,
       amount,
       balanceBefore,
@@ -247,15 +239,10 @@ export class PaymentService {
   async createPayPalPayment(
     userId: string,
     amount: number,
-    orderInfo: string = 'Purchase from Lensor',
+    orderInfo: string = 'Deposit to Lensor Wallet',
   ) {
-    // Create order first
-    const order = await this.ordersService.createOrder(
-      userId,
-      [],
-      amount,
-      'paypal',
-    );
+    // Generate unique reference
+    const referenceId = `PAYPAL_${userId}_${Date.now()}`;
 
     try {
       // Create PayPal order request
@@ -263,9 +250,9 @@ export class PaymentService {
         intent: CheckoutPaymentIntent.Capture,
         purchaseUnits: [
           {
-            referenceId: order.id,
+            referenceId,
             description: orderInfo,
-            customId: order.id,
+            customId: userId,
             softDescriptor: 'LENSOR',
             amount: {
               currencyCode: 'USD',
@@ -280,8 +267,8 @@ export class PaymentService {
           },
         ],
         applicationContext: {
-          returnUrl: `${this.configService.get<string>('PAYPAL_RETURN_URL') || 'http://localhost:3005/payment/paypal-return'}?orderId=${order.id}`,
-          cancelUrl: `${this.configService.get<string>('PAYPAL_CANCEL_URL') || 'http://localhost:3005/payment/paypal-cancel'}?orderId=${order.id}`,
+          returnUrl: `${this.configService.get<string>('PAYPAL_RETURN_URL') || 'http://localhost:3005/payment/paypal-return'}?userId=${userId}&referenceId=${referenceId}`,
+          cancelUrl: `${this.configService.get<string>('PAYPAL_CANCEL_URL') || 'http://localhost:3005/payment/paypal-cancel'}?userId=${userId}`,
           brandName: 'Lensor',
           landingPage: OrderApplicationContextLandingPage.Billing,
           userAction: OrderApplicationContextUserAction.PayNow,
@@ -301,14 +288,12 @@ export class PaymentService {
       return {
         success: true,
         paymentUrl: approvalUrl,
-        orderId: order.id,
+        referenceId,
         paypalOrderId: response.result.id,
         status: response.result.status,
       };
     } catch (error) {
       console.error('PayPal order creation error:', error);
-      // Update order status to failed
-      await this.ordersService.updateOrderStatus(order.id, 'failed', null);
       throw new Error(
         `Failed to create PayPal payment: ${error.message || 'Unknown error'}`,
       );
@@ -316,7 +301,7 @@ export class PaymentService {
   }
 
   // Capture PayPal payment
-  async capturePayPalPayment(paypalOrderId: string, orderId: string) {
+  async capturePayPalPayment(paypalOrderId: string, userId: string) {
     try {
       const response = await this.ordersController.captureOrder({
         id: paypalOrderId,
@@ -329,10 +314,12 @@ export class PaymentService {
       const transactionId =
         response.result.purchaseUnits?.[0]?.payments?.captures?.[0]?.id || null;
 
-      // Get order to find userId and amount
-      const order = await this.ordersService.getOrderById(orderId);
-      const userId = order.userId;
-      const amount = Number(order.totalAmount);
+      // Get amount from PayPal response (in USD) and convert to VND
+      const amountUSD = parseFloat(
+        response.result.purchaseUnits?.[0]?.payments?.captures?.[0]?.amount
+          ?.value || '0',
+      );
+      const amount = Math.round(amountUSD * 23000); // Convert USD to VND
 
       // Get wallet balance before transaction
       const balanceBefore = await this.walletService.getBalance(userId);
@@ -340,15 +327,16 @@ export class PaymentService {
       // Create payment history record
       const paymentHistory = await this.paymentHistoryService.createHistory({
         userId,
-        orderId,
+        orderId: null, // No order for wallet deposit
         paymentMethod: 'paypal',
         transactionType: 'deposit',
         amount,
         status,
         transactionId,
-        description: `PayPal deposit - Order #${orderId}`,
+        description: `PayPal deposit ${amount.toLocaleString()} VND`,
         metadata: {
           paypalResponse: response.result,
+          amountUSD,
         },
         balanceBefore,
         balanceAfter: balanceBefore,
@@ -359,7 +347,7 @@ export class PaymentService {
         await this.walletService.addBalance(
           userId,
           amount,
-          `PayPal deposit - Order #${orderId}`,
+          `PayPal deposit ${amount.toLocaleString()} VND`,
         );
 
         const balanceAfter = await this.walletService.getBalance(userId);
@@ -373,16 +361,8 @@ export class PaymentService {
         );
       }
 
-      // Update order status
-      await this.ordersService.updateOrderStatus(
-        orderId,
-        status,
-        transactionId,
-      );
-
       return {
         success: status === 'completed',
-        orderId,
         paypalOrderId,
         transactionId,
         status: captureStatus,
@@ -399,10 +379,8 @@ export class PaymentService {
       };
     } catch (error) {
       console.error('PayPal capture error:', error);
-      await this.ordersService.updateOrderStatus(orderId, 'failed', null);
       return {
         success: false,
-        orderId,
         paypalOrderId,
         message: `Payment capture failed: ${error.message || 'Unknown error'}`,
       };
