@@ -145,6 +145,7 @@ export class ChatService {
           isRead: message.isRead,
           createdAt: message.createdAt,
           user: {
+            id: user?.id || message.userId,
             name: user?.user_metadata?.name || user?.email || 'Unknown User',
             avatar:
               user?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
