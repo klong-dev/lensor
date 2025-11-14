@@ -10,10 +10,11 @@ import {
 import { ReportsService } from './reports.service';
 import { AdminActionDto } from './dto/admin-action.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../admin/guards/admin.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('admin/reports')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
