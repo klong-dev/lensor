@@ -13,34 +13,22 @@ export class VisionService {
   constructor(private configService: ConfigService) {
     try {
       // Try API Key first (simpler setup)
-      this.apiKey = this.configService.get<string>('GOOGLE_CLOUD_API_KEY');
+      // Fall back to Service Account credentials
+      const credentials = this.configService.get<string>(
+        'GOOGLE_APPLICATION_CREDENTIALS',
+      );
 
-      if (this.apiKey) {
+      if (credentials) {
         this.visionClient = new ImageAnnotatorClient({
-          key: this.apiKey,
+          keyFilename: credentials,
         });
         this.enabled = true;
-        this.logger.log('Google Cloud Vision initialized with API Key');
+        this.logger.log('Google Cloud Vision initialized with Service Account');
       } else {
-        // Fall back to Service Account credentials
-        const credentials = this.configService.get<string>(
-          'GOOGLE_APPLICATION_CREDENTIALS',
+        this.logger.warn(
+          'GOOGLE_CLOUD_API_KEY or GOOGLE_APPLICATION_CREDENTIALS not set, Vision API disabled',
         );
-
-        if (credentials) {
-          this.visionClient = new ImageAnnotatorClient({
-            keyFilename: credentials,
-          });
-          this.enabled = true;
-          this.logger.log(
-            'Google Cloud Vision initialized with Service Account',
-          );
-        } else {
-          this.logger.warn(
-            'GOOGLE_CLOUD_API_KEY or GOOGLE_APPLICATION_CREDENTIALS not set, Vision API disabled',
-          );
-          this.enabled = false;
-        }
+        this.enabled = false;
       }
     } catch (error) {
       this.logger.error('Failed to initialize Google Cloud Vision:', error);
