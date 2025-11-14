@@ -17,7 +17,7 @@ export class VisionService {
 
       if (this.apiKey) {
         this.visionClient = new ImageAnnotatorClient({
-          apiKey: this.apiKey,
+          key: this.apiKey,
         });
         this.enabled = true;
         this.logger.log('Google Cloud Vision initialized with API Key');
