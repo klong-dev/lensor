@@ -129,12 +129,12 @@ export class ChatService {
   async getMessages(roomId: string, limit: number = 50) {
     const messages = await this.messageRepository.find({
       where: { roomId },
-      order: { createdAt: 'ASC' }, // Changed to ASC for chronological order
+      order: { createdAt: 'DESC' }, // Changed to ASC for chronological order
       take: limit,
     });
 
     // Populate user info for each message
-    return await Promise.all(
+    const m = await Promise.all(
       messages.map(async (message) => {
         const user = await this.supabaseService.getUserById(message.userId);
         return {
@@ -152,6 +152,8 @@ export class ChatService {
         };
       }),
     );
+
+    return m.reverse();
   }
 
   async markAsRead(messageId: string) {
