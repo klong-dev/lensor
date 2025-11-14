@@ -38,15 +38,7 @@ export class PostsService {
     if (savedPost.imageUrl) {
       const backendUrl = this.configService.get<string>('BACKEND_URL');
       const fullImageUrl = `${backendUrl}${savedPost.imageUrl}`;
-      this.logger.log(
-        `Starting NSFW check for post ${savedPost.id} with image: ${fullImageUrl}`,
-      );
-      this.checkAndUpdateNSFW(savedPost.id, fullImageUrl).catch((err) => {
-        this.logger.error(
-          `NSFW check failed for post ${savedPost.id}:`,
-          err.stack,
-        );
-      });
+      this.checkAndUpdateNSFW(savedPost.id, fullImageUrl).catch(() => {});
     }
 
     return savedPost;
@@ -57,16 +49,10 @@ export class PostsService {
     imageUrl: string,
   ): Promise<void> {
     try {
-      this.logger.debug(`Checking NSFW for image: ${imageUrl}`);
       const isNSFW = await this.visionService.checkImageNSFW(imageUrl);
-      this.logger.log(`NSFW result for post ${postId}: ${isNSFW}`);
       await this.postRepository.update(postId, { isNSFW });
-      this.logger.log(`Updated post ${postId} with isNSFW=${isNSFW}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to update NSFW status for post ${postId}:`,
-        error.stack,
-      );
+    } catch {
+      // Silently fail - default to safe (isNSFW = false)
     }
   }
 
@@ -235,15 +221,7 @@ export class PostsService {
     ) {
       const backendUrl = this.configService.get<string>('BACKEND_URL');
       const fullImageUrl = `${backendUrl}${updatedPost.imageUrl}`;
-      this.logger.log(
-        `Starting NSFW check for updated post ${updatedPost.id} with image: ${fullImageUrl}`,
-      );
-      this.checkAndUpdateNSFW(updatedPost.id, fullImageUrl).catch((err) => {
-        this.logger.error(
-          `NSFW check failed for post ${updatedPost.id}:`,
-          err.stack,
-        );
-      });
+      this.checkAndUpdateNSFW(updatedPost.id, fullImageUrl).catch(() => {});
     }
 
     return updatedPost;
