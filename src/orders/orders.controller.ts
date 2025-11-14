@@ -20,6 +20,12 @@ export class OrdersController {
     return { data: orders };
   }
 
+  @Get('ready-for-withdrawal')
+  async getReadyForWithdrawal(@CurrentUser() user: { userId: string }) {
+    const orders = await this.ordersService.getReadyForWithdrawal(user.userId);
+    return { data: orders };
+  }
+
   @Get(':id')
   async getOrder(
     @Param('id') orderId: string,

@@ -11,6 +11,7 @@ import { AdminActionDto } from './dto/admin-action.dto';
 import { OrdersService } from '../orders/orders.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PaymentHistoryService } from '../payment-history/payment-history.service';
 
 @Injectable()
 export class ReportsService {
@@ -20,6 +21,7 @@ export class ReportsService {
     private ordersService: OrdersService,
     private walletService: WalletService,
     private notificationsService: NotificationsService,
+    private paymentHistoryService: PaymentHistoryService,
   ) {}
 
   async createReport(userId: string, createReportDto: CreateReportDto) {
@@ -166,12 +168,37 @@ export class ReportsService {
     const order = await this.ordersService.getOrderById(report.orderId);
 
     if (action === 'approved') {
+      // Get wallet balance before refund
+      const balanceBefore = await this.walletService.getBalance(report.buyerId);
+
       // Refund buyer
       await this.walletService.addBalance(
         report.buyerId,
         Number(order.totalAmount),
         `Refund for order #${report.orderId} - Report approved`,
       );
+
+      // Get wallet balance after refund
+      const balanceAfter = await this.walletService.getBalance(report.buyerId);
+
+      // Create payment history record for refund
+      await this.paymentHistoryService.createHistory({
+        userId: report.buyerId,
+        orderId: report.orderId,
+        paymentMethod: 'refund',
+        transactionType: 'refund',
+        amount: Number(order.totalAmount),
+        status: 'completed',
+        transactionId: reportId,
+        description: `Refund cho đơn hàng #${report.orderId}`,
+        metadata: {
+          reportId,
+          reason: report.reason,
+          adminResponse,
+        },
+        balanceBefore,
+        balanceAfter,
+      });
 
       // Update order status
       await this.ordersService.updateOrderStatus(
@@ -180,23 +207,28 @@ export class ReportsService {
         null,
       );
 
-      // Notify buyer
+      // Notify buyer - Refund request approved
       await this.notificationsService.createNotification(
         report.buyerId,
         'report_approved',
-        'Your report has been approved',
-        `Your report has been approved. Amount ${order.totalAmount} has been refunded to your wallet.`,
-        { reportId, orderId: report.orderId },
+        'Yêu cầu hoàn tiền đã được chấp nhận',
+        `Yêu cầu hoàn tiền của bạn đã được chấp nhận. Số tiền ${Number(order.totalAmount).toLocaleString('vi-VN')} VNĐ đã được hoàn vào ví của bạn.${adminResponse ? ` Phản hồi từ admin: ${adminResponse}` : ''}`,
+        { reportId, orderId: report.orderId, amount: order.totalAmount },
         `/orders/${report.orderId}`,
       );
 
-      // Notify seller
+      // Notify seller - Order refunded with reason
       await this.notificationsService.createNotification(
         report.sellerId,
-        'report_approved',
-        'Report against your product was approved',
-        `The report for order #${report.orderId} has been approved. The buyer has been refunded.`,
-        { reportId, orderId: report.orderId },
+        'order_refunded',
+        'Đơn hàng đã bị hoàn tiền',
+        `Đơn hàng #${report.orderId} đã bị hoàn tiền với lý do: "${report.reason}". Số tiền ${Number(order.totalAmount).toLocaleString('vi-VN')} VNĐ đã được hoàn lại cho người mua.${adminResponse ? ` Admin: ${adminResponse}` : ''}`,
+        {
+          reportId,
+          orderId: report.orderId,
+          reason: report.reason,
+          amount: order.totalAmount,
+        },
         `/reports/${reportId}`,
       );
     } else if (action === 'rejected') {
