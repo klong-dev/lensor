@@ -10,7 +10,7 @@ import {
 import { WithdrawalsService } from './withdrawals.service';
 import { AdminWithdrawalActionDto } from './dto/admin-withdrawal-action.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { AdminGuard } from '../auth/guards/admin.guard';
+import { AdminGuard } from '../admin/guards/admin.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('admin/withdrawals')
