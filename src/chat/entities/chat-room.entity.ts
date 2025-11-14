@@ -19,7 +19,7 @@ export class ChatRoom {
   @Column({ type: 'varchar', length: 50, default: 'group' })
   type: string; // 'direct' or 'group'
 
-  @Column('simple-array', { nullable: true })
+  @Column('text', { array: true, nullable: true })
   participantIds: string[];
 
   @OneToMany(() => ChatMessage, (message) => message.room)

@@ -124,4 +124,64 @@ export class UploadService {
   getImageServiceUrl(): string {
     return this.imageServiceUrl;
   }
+
+  /**
+   * Upload evidence files for reports
+   * Similar to uploadMultipleFiles but dedicated for report evidence
+   * Stores in separate 'evidence' folder in image service
+   */
+  async uploadEvidenceFiles(
+    files: Express.Multer.File[],
+    userId: string,
+    reportId: string,
+  ): Promise<string[]> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No evidence files provided');
+    }
+
+    try {
+      // Create JWT token
+      const token = this.jwtService.sign({ sub: userId }, { expiresIn: '10m' });
+
+      // Create form data
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file.buffer, {
+          filename: file.originalname,
+          contentType: file.mimetype,
+        });
+      });
+
+      // Add metadata for evidence storage
+      formData.append('folder', 'evidence');
+      formData.append('reportId', reportId);
+      formData.append('userId', userId);
+
+      // Call Python microservice
+      const response = await axios.post(
+        `${this.imageServiceUrl}/upload/evidence`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 120000, // 120s timeout
+        },
+      );
+
+      if (response.data.success) {
+        // Return array of original URLs (evidence doesn't need thumbnails)
+        return response.data.data.uploaded.map((item: any) => item.original);
+      }
+
+      throw new BadRequestException('Evidence upload failed');
+    } catch (error) {
+      this.logger.error('Error uploading evidence files:', error);
+      if (error.response?.data?.error) {
+        throw new BadRequestException(error.response.data.error);
+      }
+      throw new BadRequestException('Failed to upload evidence files');
+    }
+  }
 }
