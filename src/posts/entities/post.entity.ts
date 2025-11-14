@@ -126,6 +126,9 @@ export class Post {
   @Column({ name: 'is_saved', type: 'boolean', default: false })
   isSaved: boolean;
 
+  @Column({ name: 'is_nsfw', type: 'boolean', default: false })
+  isNSFW: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

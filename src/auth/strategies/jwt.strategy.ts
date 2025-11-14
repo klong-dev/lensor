@@ -5,7 +5,10 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 
 export interface JwtPayload {
   sub: string; // user id
-  email: string;
+  email?: string;
+  username?: string;
+  role?: string;
+  type?: string; // 'user' or 'admin'
   iat?: number;
   exp?: number;
 }
@@ -24,6 +27,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: payload.sub,
       email: payload.email,
+      username: payload.username,
+      role: payload.role,
+      type: payload.type,
     };
   }
 }
