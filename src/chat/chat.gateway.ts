@@ -72,7 +72,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Get user info for the message
-    const messageData = await this.chatService.getMessages(data.roomId, 1);
+    const messageData = await this.chatService.getMessages(data.roomId, 999999);
     const latestMessage = messageData[messageData.length - 1];
 
     // Broadcast to all clients in the room
