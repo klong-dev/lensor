@@ -65,3 +65,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Postman collections (local only)
 /postman
+
+wdp-auth-7a61f46ec462.json
