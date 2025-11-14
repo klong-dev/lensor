@@ -18,7 +18,7 @@ export class UploadsController {
   ) {
     try {
       // Validate folder (security check)
-      const allowedFolders = ['originals', 'thumbnails'];
+      const allowedFolders = ['originals', 'thumbnails', 'presets'];
       if (!allowedFolders.includes(folder)) {
         return res.status(HttpStatus.BAD_REQUEST).json({
           error: 'Invalid folder path',
