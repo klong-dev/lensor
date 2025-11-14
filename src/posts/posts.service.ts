@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -9,9 +9,12 @@ import { UserFollowsService } from '../user-follows/user-follows.service';
 import { PostLikesService } from '../post-likes/post-likes.service';
 import { PostCommentsService } from '../post-comments/post-comments.service';
 import { VisionService } from '../vision/vision.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PostsService {
+  private readonly logger = new Logger(PostsService.name);
+
   constructor(
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
@@ -20,6 +23,7 @@ export class PostsService {
     private postLikesService: PostLikesService,
     private postCommentsService: PostCommentsService,
     private visionService: VisionService,
+    private configService: ConfigService,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -32,9 +36,17 @@ export class PostsService {
 
     // Check NSFW asynchronously (don't block response)
     if (savedPost.imageUrl) {
-      this.checkAndUpdateNSFW(savedPost.id, savedPost.imageUrl).catch((err) =>
-        console.error('NSFW check failed:', err),
+      const backendUrl = this.configService.get<string>('BACKEND_URL');
+      const fullImageUrl = `${backendUrl}${savedPost.imageUrl}`;
+      this.logger.log(
+        `Starting NSFW check for post ${savedPost.id} with image: ${fullImageUrl}`,
       );
+      this.checkAndUpdateNSFW(savedPost.id, fullImageUrl).catch((err) => {
+        this.logger.error(
+          `NSFW check failed for post ${savedPost.id}:`,
+          err.stack,
+        );
+      });
     }
 
     return savedPost;
@@ -45,10 +57,16 @@ export class PostsService {
     imageUrl: string,
   ): Promise<void> {
     try {
+      this.logger.debug(`Checking NSFW for image: ${imageUrl}`);
       const isNSFW = await this.visionService.checkImageNSFW(imageUrl);
+      this.logger.log(`NSFW result for post ${postId}: ${isNSFW}`);
       await this.postRepository.update(postId, { isNSFW });
+      this.logger.log(`Updated post ${postId} with isNSFW=${isNSFW}`);
     } catch (error) {
-      console.error(`Failed to update NSFW status for post ${postId}:`, error);
+      this.logger.error(
+        `Failed to update NSFW status for post ${postId}:`,
+        error.stack,
+      );
     }
   }
 
@@ -215,9 +233,17 @@ export class PostsService {
       updatePostDto.imageUrl !== oldImageUrl &&
       updatedPost.imageUrl
     ) {
-      this.checkAndUpdateNSFW(updatedPost.id, updatedPost.imageUrl).catch(
-        (err) => console.error('NSFW check failed:', err),
+      const backendUrl = this.configService.get<string>('BACKEND_URL');
+      const fullImageUrl = `${backendUrl}${updatedPost.imageUrl}`;
+      this.logger.log(
+        `Starting NSFW check for updated post ${updatedPost.id} with image: ${fullImageUrl}`,
       );
+      this.checkAndUpdateNSFW(updatedPost.id, fullImageUrl).catch((err) => {
+        this.logger.error(
+          `NSFW check failed for post ${updatedPost.id}:`,
+          err.stack,
+        );
+      });
     }
 
     return updatedPost;
