@@ -90,8 +90,9 @@ export class ChatService {
             const user = await this.supabaseService.getUserById(id);
             return {
               id,
-              name: user?.name || user?.email || 'Unknown User',
-              avatar: user?.avatar_url || '/images/default_avatar.jpg',
+              name: user?.user_metadata.name || user?.email || 'Unknown User',
+              avatar:
+                user?.user_metadata.avatar_url || '/images/default_avatar.jpg',
             };
           }),
         );
@@ -144,8 +145,9 @@ export class ChatService {
           isRead: message.isRead,
           createdAt: message.createdAt,
           user: {
-            name: user?.name || user?.email || 'Unknown User',
-            avatar: user?.avatar_url || '/images/default_avatar.jpg',
+            name: user?.user_metadata?.name || user?.email || 'Unknown User',
+            avatar:
+              user?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
           },
         };
       }),

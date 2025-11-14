@@ -75,8 +75,10 @@ export class ProductsService {
             product.thumbnail || product.image || '/images/default-product.jpg',
           author: {
             id: author?.id || product.userId,
-            name: author?.name || author?.email || 'Unknown User',
-            avatar: author?.avatar_url || '/images/default_avatar.jpg',
+            name:
+              author?.user_metadata?.name || author?.email || 'Unknown User',
+            avatar:
+              author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
           },
           rating: Number(product.rating),
           reviewCount: product.reviewCount,
@@ -189,8 +191,9 @@ export class ProductsService {
       downloads: product.downloads,
       sellCount: product.sellCount,
       author: {
-        name: author?.name || author?.email || 'Unknown User',
-        avatar: author?.avatar_url || '/images/default_avatar.jpg',
+        name: author?.user_metadata?.name || author?.email || 'Unknown User',
+        avatar:
+          author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
         verified: author?.verified || false,
         totalProducts,
       },
@@ -328,8 +331,9 @@ export class ProductsService {
       downloads: product.downloads,
       sellCount: product.sellCount,
       author: {
-        name: author?.name || author?.email || 'Unknown User',
-        avatar: author?.avatar_url || '/images/default_avatar.jpg',
+        name: author?.user_metadata?.name || author?.email || 'Unknown User',
+        avatar:
+          author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
       },
       image: product.image,
       thumbnail: product.thumbnail,
@@ -370,8 +374,8 @@ export class ProductsService {
     const review = this.reviewRepository.create({
       productId,
       userId,
-      userName: user?.name || user?.email || 'Anonymous',
-      userAvatar: user?.avatar_url,
+      userName: user?.user_metadata?.name || user?.email || 'Anonymous',
+      userAvatar: user?.user_metadata?.avatar_url,
       rating,
       comment,
     });
