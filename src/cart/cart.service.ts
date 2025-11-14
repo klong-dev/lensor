@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
 import { ProductsService } from '../products/products.service';
+import { SupabaseService } from '../supabase/supabase.service';
 
 @Injectable()
 export class CartService {
@@ -10,33 +11,45 @@ export class CartService {
     @InjectRepository(CartItem)
     private cartItemRepository: Repository<CartItem>,
     private productsService: ProductsService,
+    private supabaseService: SupabaseService,
   ) {}
 
   async getCart(userId: string) {
     const items = await this.cartItemRepository.find({
       where: { userId },
-      relations: ['product', 'product.owner'],
-      select: {
-        product: {
-          id: true,
-          title: true,
-          description: true,
-          price: true,
-          originalPrice: true,
-          discount: true,
-          image: true,
-          thumbnail: true,
-          rating: true,
-          reviewCount: true,
-          category: true,
-          owner: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      relations: ['product'],
       order: { createdAt: 'DESC' },
     });
+
+    // Get unique user IDs from products
+    const userIds = [...new Set(items.map((item) => item.product.userId))];
+
+    // Fetch user data from Supabase
+    const userMap = new Map<string, { id: string; name: string }>();
+    await Promise.all(
+      userIds.map(async (uid) => {
+        try {
+          const user = await this.supabaseService.getUserById(uid);
+          if (user) {
+            userMap.set(uid, {
+              id: user.id,
+              name: user.user_metadata?.name || user.email?.split('@')[0],
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to fetch user ${uid}:`, error);
+        }
+      }),
+    );
+
+    // Map owner data to items
+    const itemsWithOwner = items.map((item) => ({
+      ...item,
+      product: {
+        ...item.product,
+        owner: userMap.get(item.product.userId) || null,
+      },
+    }));
 
     const total = items.reduce(
       (sum, item) => sum + Number(item.price) * item.quantity,
@@ -44,7 +57,7 @@ export class CartService {
     );
 
     return {
-      items,
+      items: itemsWithOwner,
       total,
       count: items.length,
     };
@@ -121,28 +134,39 @@ export class CartService {
   }
 
   async getCartItems(userId: string) {
-    return await this.cartItemRepository.find({
+    const items = await this.cartItemRepository.find({
       where: { userId },
-      relations: ['product', 'product.owner'],
-      select: {
-        product: {
-          id: true,
-          title: true,
-          description: true,
-          price: true,
-          originalPrice: true,
-          discount: true,
-          image: true,
-          thumbnail: true,
-          rating: true,
-          reviewCount: true,
-          category: true,
-          owner: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      relations: ['product'],
     });
+
+    // Get unique user IDs from products
+    const userIds = [...new Set(items.map((item) => item.product.userId))];
+
+    // Fetch user data from Supabase
+    const userMap = new Map<string, { id: string; name: string }>();
+    await Promise.all(
+      userIds.map(async (uid) => {
+        try {
+          const user = await this.supabaseService.getUserById(uid);
+          if (user) {
+            userMap.set(uid, {
+              id: user.id,
+              name: user.user_metadata?.name || user.email?.split('@')[0],
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to fetch user ${uid}:`, error);
+        }
+      }),
+    );
+
+    // Map owner data to items
+    return items.map((item) => ({
+      ...item,
+      product: {
+        ...item.product,
+        owner: userMap.get(item.product.userId) || null,
+      },
+    }));
   }
 }
