@@ -225,12 +225,6 @@ export class OrdersService {
       throw new BadRequestException('Order not found or access denied');
     }
 
-    if (order.status !== 'completed') {
-      throw new BadRequestException(
-        'Products are only available for completed orders',
-      );
-    }
-
     // Get product details with download links for each item
     const orderItems = Array.isArray(order.items) ? order.items : [];
     const products = await Promise.all(

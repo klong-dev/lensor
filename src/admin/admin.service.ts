@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Admin } from './entities/admin.entity';
+import { Order } from '../orders/entities/order.entity';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
 
@@ -17,6 +18,8 @@ export class AdminService {
   constructor(
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
+    @InjectRepository(Order)
+    private orderRepository: Repository<Order>,
     private jwtService: JwtService,
   ) {}
 
@@ -132,5 +135,68 @@ export class AdminService {
   async deactivateAdmin(adminId: string) {
     await this.adminRepository.update(adminId, { isActive: false });
     return { message: 'Admin deactivated successfully' };
+  }
+
+  async getRevenueStatistics() {
+    // Lấy tất cả orders có status = 'withdrawn' (đã rút tiền)
+    const withdrawnOrders = await this.orderRepository.find({
+      where: { status: 'withdrawn' },
+      select: ['id', 'totalAmount', 'createdAt', 'items'],
+    });
+
+    if (withdrawnOrders.length === 0) {
+      return {
+        totalOrders: 0,
+        totalOrderValue: 0,
+        platformRevenue: 0, // 17% của tổng
+        platformRevenuePercentage: 17,
+        sellerRevenue: 0, // 83% còn lại
+        sellerRevenuePercentage: 83,
+        formattedPlatformRevenue: '0 VNĐ',
+        formattedSellerRevenue: '0 VNĐ',
+        formattedTotalOrderValue: '0 VNĐ',
+      };
+    }
+
+    // Tính tổng giá trị các orders
+    const totalOrderValue = withdrawnOrders.reduce(
+      (sum, order) => sum + Number(order.totalAmount),
+      0,
+    );
+
+    // Tính doanh thu platform (17%)
+    const platformRevenue = totalOrderValue * 0.17;
+
+    // Tính phần seller nhận được (83%)
+    const sellerRevenue = totalOrderValue * 0.83;
+
+    // Format số tiền theo VND
+    const formatVND = (amount: number) => {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0,
+      }).format(amount);
+    };
+
+    return {
+      totalOrders: withdrawnOrders.length,
+      totalOrderValue: Math.round(totalOrderValue),
+      platformRevenue: Math.round(platformRevenue), // 17%
+      platformRevenuePercentage: 17,
+      sellerRevenue: Math.round(sellerRevenue), // 83%
+      sellerRevenuePercentage: 83,
+      formattedPlatformRevenue: formatVND(platformRevenue),
+      formattedSellerRevenue: formatVND(sellerRevenue),
+      formattedTotalOrderValue: formatVND(totalOrderValue),
+      orders: withdrawnOrders.map((order) => ({
+        id: order.id,
+        totalAmount: Number(order.totalAmount),
+        platformFee: Math.round(Number(order.totalAmount) * 0.17),
+        sellerReceived: Math.round(Number(order.totalAmount) * 0.83),
+        createdAt: order.createdAt,
+        itemCount: order.items?.length || 0,
+      })),
+    };
   }
 }

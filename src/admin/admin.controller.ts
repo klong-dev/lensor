@@ -40,4 +40,11 @@ export class AdminController {
     const admins = await this.adminService.getAllAdmins();
     return { data: admins };
   }
+
+  @Get('revenue/statistics')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getRevenueStatistics() {
+    const statistics = await this.adminService.getRevenueStatistics();
+    return { data: statistics };
+  }
 }
