@@ -127,8 +127,8 @@ export class UploadService {
 
   /**
    * Upload evidence files for reports
-   * Similar to uploadMultipleFiles but dedicated for report evidence
-   * Stores in separate 'evidence' folder in image service
+   * Uses the existing /upload/multiple endpoint
+   * Returns only original URLs (evidence doesn't need thumbnails)
    */
   async uploadEvidenceFiles(
     files: Express.Multer.File[],
@@ -140,47 +140,13 @@ export class UploadService {
     }
 
     try {
-      // Create JWT token
-      const token = this.jwtService.sign({ sub: userId }, { expiresIn: '10m' });
+      // Use the existing uploadMultipleFiles method
+      const uploadResults = await this.uploadMultipleFiles(files, userId);
 
-      // Create form data
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file.buffer, {
-          filename: file.originalname,
-          contentType: file.mimetype,
-        });
-      });
-
-      // Add metadata for evidence storage
-      formData.append('folder', 'evidence');
-      formData.append('reportId', reportId);
-      formData.append('userId', userId);
-
-      // Call Python microservice
-      const response = await axios.post(
-        `${this.imageServiceUrl}/upload/evidence`,
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 120000, // 120s timeout
-        },
-      );
-
-      if (response.data.success) {
-        // Return array of original URLs (evidence doesn't need thumbnails)
-        return response.data.data.uploaded.map((item: any) => item.original);
-      }
-
-      throw new BadRequestException('Evidence upload failed');
+      // Return only original URLs (evidence doesn't need thumbnails)
+      return uploadResults.map((item) => item.original);
     } catch (error) {
       this.logger.error('Error uploading evidence files:', error);
-      if (error.response?.data?.error) {
-        throw new BadRequestException(error.response.data.error);
-      }
       throw new BadRequestException('Failed to upload evidence files');
     }
   }
