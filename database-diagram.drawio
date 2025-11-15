@@ -1,0 +1,415 @@
+<mxfile host="app.diagrams.net" modified="2025-11-15T00:00:00.000Z" agent="draw.io" version="22.0.0" type="device">
+  <diagram name="Lensor Database Schema" id="database-schema">
+    <mxGraphModel dx="2000" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3500" pageHeight="2500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Users (Supabase Auth) -->
+        <mxCell id="users" value="&lt;b&gt;users (Supabase Auth)&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;email: varchar&lt;br&gt;role: varchar&lt;br&gt;createdAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="100" y="100" width="220" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Wallets -->
+        <mxCell id="wallets" value="&lt;b&gt;wallets&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid (UNIQUE)&lt;br&gt;balance: decimal(15,2)&lt;br&gt;currency: varchar(3)&lt;br&gt;isActive: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="400" y="100" width="240" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Products -->
+        <mxCell id="products" value="&lt;b&gt;products&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid (seller)&lt;br&gt;title: varchar(255)&lt;br&gt;description: text&lt;br&gt;price: decimal(10,2)&lt;br&gt;originalPrice: decimal(10,2)&lt;br&gt;discount: int&lt;br&gt;image: varchar(500)&lt;br&gt;thumbnail: varchar(500)&lt;br&gt;imagePairs: text (JSON)&lt;br&gt;presetFiles: text (JSON)&lt;br&gt;imageMetadata: jsonb&lt;br&gt;rating: decimal(2,1)&lt;br&gt;reviewCount: int&lt;br&gt;sellCount: int&lt;br&gt;downloads: int&lt;br&gt;category: varchar(100)&lt;br&gt;tags: text&lt;br&gt;compatibility: text&lt;br&gt;fileFormat: varchar(50)&lt;br&gt;fileSize: varchar(50)&lt;br&gt;features: text&lt;br&gt;specifications: text (JSON)&lt;br&gt;warranty: text (JSON)&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp&lt;br&gt;deletedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="300" width="280" height="560" as="geometry" />
+        </mxCell>
+
+        <!-- Cart Items -->
+        <mxCell id="cart_items" value="&lt;b&gt;cart_items&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 productId: uuid&lt;br&gt;quantity: int&lt;br&gt;price: decimal(10,2)&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="300" width="220" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Orders -->
+        <mxCell id="orders" value="&lt;b&gt;orders&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid (buyer)&lt;br&gt;totalAmount: decimal(10,2)&lt;br&gt;status: varchar(50)&lt;br&gt;&lt;i&gt;(pending, completed, failed,&lt;br&gt;refunded, reported,&lt;br&gt;ready_for_withdrawal,&lt;br&gt;withdrawing, withdrawn)&lt;/i&gt;&lt;br&gt;paymentMethod: varchar(50)&lt;br&gt;transactionId: varchar&lt;br&gt;items: json (array)&lt;br&gt;&lt;i&gt;[{productId, productTitle,&lt;br&gt;quantity, price, subtotal,&lt;br&gt;sellerId}]&lt;/i&gt;&lt;br&gt;canWithdraw: boolean&lt;br&gt;withdrawableAt: timestamp&lt;br&gt;🔗 reportId: uuid&lt;br&gt;cancelReason: varchar(255)&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="750" y="100" width="280" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- Payment History -->
+        <mxCell id="payment_history" value="&lt;b&gt;payment_history&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 orderId: uuid (nullable)&lt;br&gt;paymentMethod: varchar(50)&lt;br&gt;transactionType: varchar(50)&lt;br&gt;&lt;i&gt;(deposit, payment, refund,&lt;br&gt;withdrawal)&lt;/i&gt;&lt;br&gt;amount: decimal(15,2)&lt;br&gt;currency: varchar(3)&lt;br&gt;status: varchar(50)&lt;br&gt;transactionId: varchar(255)&lt;br&gt;description: text&lt;br&gt;metadata: jsonb&lt;br&gt;balanceBefore: decimal(15,2)&lt;br&gt;balanceAfter: decimal(15,2)&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="100" width="260" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Reports -->
+        <mxCell id="reports" value="&lt;b&gt;reports&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 orderId: uuid&lt;br&gt;🔗 buyerId: uuid&lt;br&gt;🔗 sellerId: uuid&lt;br&gt;🔗 productId: uuid&lt;br&gt;status: varchar(50)&lt;br&gt;&lt;i&gt;(pending, approved, rejected,&lt;br&gt;need_more_info)&lt;/i&gt;&lt;br&gt;reason: text&lt;br&gt;evidence: json&lt;br&gt;adminResponse: text&lt;br&gt;🔗 adminId: uuid&lt;br&gt;resolvedAt: timestamp&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="750" y="540" width="280" height="280" as="geometry" />
+        </mxCell>
+
+        <!-- Bank Cards -->
+        <mxCell id="bank_cards" value="&lt;b&gt;bank_cards&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid (seller)&lt;br&gt;bankName: varchar(100)&lt;br&gt;accountNumber: varchar(50)&lt;br&gt;accountHolder: varchar(100)&lt;br&gt;isDefault: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="480" width="260" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Withdrawals -->
+        <mxCell id="withdrawals" value="&lt;b&gt;withdrawals&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid (seller)&lt;br&gt;🔗 bankCardId: uuid&lt;br&gt;amount: decimal(10,2)&lt;br&gt;&lt;i&gt;(total before fee)&lt;/i&gt;&lt;br&gt;fee: decimal(10,2)&lt;br&gt;&lt;i&gt;(17% platform fee)&lt;/i&gt;&lt;br&gt;actualAmount: decimal(10,2)&lt;br&gt;&lt;i&gt;(amount - fee)&lt;/i&gt;&lt;br&gt;status: varchar(50)&lt;br&gt;&lt;i&gt;(pending, approved, rejected)&lt;/i&gt;&lt;br&gt;orderIds: json (array)&lt;br&gt;bankInfo: json (snapshot)&lt;br&gt;note: text&lt;br&gt;🔗 adminId: uuid&lt;br&gt;adminResponse: text&lt;br&gt;processedAt: timestamp&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="720" width="260" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- Notifications -->
+        <mxCell id="notifications" value="&lt;b&gt;notifications&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;type: varchar(100)&lt;br&gt;title: varchar(255)&lt;br&gt;message: text&lt;br&gt;action: varchar(255)&lt;br&gt;targetId: uuid&lt;br&gt;targetType: varchar(50)&lt;br&gt;category: varchar(100)&lt;br&gt;read: boolean&lt;br&gt;icon: varchar(255)&lt;br&gt;actionUrl: varchar(255)&lt;br&gt;metadata: jsonb&lt;br&gt;time: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="100" width="260" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Posts -->
+        <mxCell id="posts" value="&lt;b&gt;posts&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 communicateId: uuid&lt;br&gt;🔗 categoryId: uuid&lt;br&gt;title: varchar(500)&lt;br&gt;content: text&lt;br&gt;imageUrl: varchar&lt;br&gt;thumbnailUrl: varchar&lt;br&gt;imageMetadata: jsonb&lt;br&gt;isSaved: boolean&lt;br&gt;isNSFW: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp&lt;br&gt;deletedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="450" y="540" width="240" height="300" as="geometry" />
+        </mxCell>
+
+        <!-- Post Comments -->
+        <mxCell id="post_comments" value="&lt;b&gt;post_comments&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 postId: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 parentId: uuid (nullable)&lt;br&gt;content: text&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp&lt;br&gt;deletedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="450" y="900" width="240" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Post Likes -->
+        <mxCell id="post_likes" value="&lt;b&gt;post_likes&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 postId: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;createdAt: timestamp&lt;br&gt;&lt;br&gt;🔒 UNIQUE(postId, userId)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="750" y="900" width="240" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- Saved Posts -->
+        <mxCell id="saved_posts" value="&lt;b&gt;saved_posts&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 postId: uuid&lt;br&gt;createdAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1200" width="220" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Votes -->
+        <mxCell id="votes" value="&lt;b&gt;votes&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;🔗 targetId: uuid&lt;br&gt;targetType: enum&lt;br&gt;&lt;i&gt;(post, comment)&lt;/i&gt;&lt;br&gt;value: smallint&lt;br&gt;&lt;i&gt;(1=upvote, -1=downvote)&lt;/i&gt;&lt;br&gt;createdAt: timestamp&lt;br&gt;&lt;br&gt;🔒 UNIQUE(userId, targetId,&lt;br&gt;targetType)" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="100" y="920" width="240" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Categories -->
+        <mxCell id="categories" value="&lt;b&gt;categories&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;name: varchar(255) UNIQUE&lt;br&gt;description: text&lt;br&gt;iconUrl: varchar&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="100" y="540" width="240" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Forums -->
+        <mxCell id="forums" value="&lt;b&gt;forums&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;name: varchar(200)&lt;br&gt;description: text&lt;br&gt;iconUrl: varchar&lt;br&gt;coverUrl: varchar&lt;br&gt;isActive: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="540" width="240" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Communicates -->
+        <mxCell id="communicates" value="&lt;b&gt;communicates&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 forumId: uuid&lt;br&gt;name: varchar(200)&lt;br&gt;description: text&lt;br&gt;iconUrl: varchar&lt;br&gt;type: varchar(50)&lt;br&gt;&lt;i&gt;(public, private, restricted)&lt;/i&gt;&lt;br&gt;isActive: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="780" width="240" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- User Follows -->
+        <mxCell id="user_follows" value="&lt;b&gt;user_follows&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 followerId: uuid&lt;br&gt;🔗 followingId: uuid&lt;br&gt;notifyOnPost: boolean&lt;br&gt;notifyOnComment: boolean&lt;br&gt;notifyOnVote: boolean&lt;br&gt;createdAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="100" width="240" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Product Reviews -->
+        <mxCell id="product_reviews" value="&lt;b&gt;product_reviews&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 productId: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;userName: varchar(255)&lt;br&gt;userAvatar: varchar(500)&lt;br&gt;rating: decimal(2,1)&lt;br&gt;comment: text&lt;br&gt;helpful: int&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp&lt;br&gt;deletedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="450" y="100" width="240" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- Chat Rooms -->
+        <mxCell id="chat_rooms" value="&lt;b&gt;chat_rooms&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;name: varchar&lt;br&gt;type: varchar(50)&lt;br&gt;&lt;i&gt;(direct, group)&lt;/i&gt;&lt;br&gt;participantIds: text[]&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="340" width="240" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Chat Messages -->
+        <mxCell id="chat_messages" value="&lt;b&gt;chat_messages&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;🔗 roomId: uuid&lt;br&gt;🔗 userId: uuid&lt;br&gt;content: text&lt;br&gt;isRead: boolean&lt;br&gt;createdAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="560" width="240" height="160" as="geometry" />
+        </mxCell>
+
+        <!-- Admins -->
+        <mxCell id="admins" value="&lt;b&gt;admins&lt;/b&gt;&lt;hr&gt;🔑 id: uuid&lt;br&gt;username: varchar UNIQUE&lt;br&gt;password: varchar (hashed)&lt;br&gt;email: varchar&lt;br&gt;name: varchar&lt;br&gt;role: varchar(50)&lt;br&gt;&lt;i&gt;(admin, super_admin)&lt;/i&gt;&lt;br&gt;isActive: boolean&lt;br&gt;createdAt: timestamp&lt;br&gt;updatedAt: timestamp" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;align=center;fontSize=11;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="1750" y="780" width="240" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Relationships -->
+        
+        <!-- users → wallets (1:1) -->
+        <mxCell id="rel_users_wallets" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERone;endFill=1;startArrow=ERone;startFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="users" target="wallets">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="160" as="sourcePoint" />
+            <mxPoint x="400" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → products (1:N - seller) -->
+        <mxCell id="rel_users_products" value="sells" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.1;entryDx=0;entryDy=0;strokeColor=#d6b656;" edge="1" parent="1" source="users" target="products">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="100" y="220" as="sourcePoint" />
+            <mxPoint x="100" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → cart_items (1:N) -->
+        <mxCell id="rel_users_cart" value="has cart" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="users" target="cart_items">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="180" as="sourcePoint" />
+            <mxPoint x="450" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- products → cart_items (1:N) -->
+        <mxCell id="rel_products_cart" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.2;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="products" target="cart_items">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="380" y="400" as="sourcePoint" />
+            <mxPoint x="450" y="380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → orders (1:N - buyer) -->
+        <mxCell id="rel_users_orders" value="buys" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.15;entryDx=0;entryDy=0;strokeColor=#d79b00;" edge="1" parent="1" source="users" target="orders">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="130" as="sourcePoint" />
+            <mxPoint x="750" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- orders → reports (1:1) -->
+        <mxCell id="rel_orders_reports" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERzeroToOne;endFill=1;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;dashed=1;" edge="1" parent="1" source="orders" target="reports">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="890" y="480" as="sourcePoint" />
+            <mxPoint x="890" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → reports (1:N - buyer) -->
+        <mxCell id="rel_users_reports_buyer" value="reports as buyer" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#b85450;dashed=1;" edge="1" parent="1" source="users" target="reports">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="210" y="220" as="sourcePoint" />
+            <mxPoint x="750" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → payment_history (1:N) -->
+        <mxCell id="rel_users_payment" value="transactions" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;strokeColor=#82b366;" edge="1" parent="1" source="wallets" target="payment_history">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="640" y="180" as="sourcePoint" />
+            <mxPoint x="1100" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- orders → payment_history (1:N) -->
+        <mxCell id="rel_orders_payment" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERzeroToOne;startFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;dashed=1;" edge="1" parent="1" source="orders" target="payment_history">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1030" y="290" as="sourcePoint" />
+            <mxPoint x="1100" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → bank_cards (1:N - seller) -->
+        <mxCell id="rel_users_bankcards" value="seller's banks" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="users" target="bank_cards">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="220" as="sourcePoint" />
+            <mxPoint x="1100" y="525" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → withdrawals (1:N - seller) -->
+        <mxCell id="rel_users_withdrawals" value="seller withdraws" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="users" target="withdrawals">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="210" y="220" as="sourcePoint" />
+            <mxPoint x="1100" y="792" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- bank_cards → withdrawals (1:N) -->
+        <mxCell id="rel_bankcards_withdrawals" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="bank_cards" target="withdrawals">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1230" y="660" as="sourcePoint" />
+            <mxPoint x="1230" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- orders → withdrawals (N:M via orderIds JSON) -->
+        <mxCell id="rel_orders_withdrawals" value="orderIds[]" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERmany;startFill=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="orders" target="withdrawals">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1030" y="380" as="sourcePoint" />
+            <mxPoint x="1100" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → notifications (1:N) -->
+        <mxCell id="rel_users_notifications" value="receives" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="wallets" target="notifications">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="640" y="140" as="sourcePoint" />
+            <mxPoint x="1430" y="175" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → posts (1:N) -->
+        <mxCell id="rel_users_posts" value="creates" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="users" target="posts">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="210" y="220" as="sourcePoint" />
+            <mxPoint x="450" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- posts → post_comments (1:N) -->
+        <mxCell id="rel_posts_comments" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="posts" target="post_comments">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="570" y="840" as="sourcePoint" />
+            <mxPoint x="570" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- posts → post_likes (1:N) -->
+        <mxCell id="rel_posts_likes" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="posts" target="post_likes">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="690" y="765" as="sourcePoint" />
+            <mxPoint x="750" y="970" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- posts → saved_posts (1:N) -->
+        <mxCell id="rel_posts_saved" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="posts" target="saved_posts">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="450" y="765" as="sourcePoint" />
+            <mxPoint x="320" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- posts → votes (1:N) -->
+        <mxCell id="rel_posts_votes" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="posts" target="votes">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="450" y="690" as="sourcePoint" />
+            <mxPoint x="340" y="975" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- categories → posts (1:N) -->
+        <mxCell id="rel_categories_posts" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#d6b656;" edge="1" parent="1" source="categories" target="posts">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="340" y="620" as="sourcePoint" />
+            <mxPoint x="450" y="615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- forums → communicates (1:N) -->
+        <mxCell id="rel_forums_communicates" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#d79b00;" edge="1" parent="1" source="forums" target="communicates">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1550" y="720" as="sourcePoint" />
+            <mxPoint x="1550" y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- communicates → posts (1:N) -->
+        <mxCell id="rel_communicates_posts" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#d79b00;dashed=1;" edge="1" parent="1" source="communicates" target="posts">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1430" y="835" as="sourcePoint" />
+            <mxPoint x="690" y="615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → user_follows (1:N follower) -->
+        <mxCell id="rel_users_follows_follower" value="follows" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1" source="users" target="user_follows">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="130" as="sourcePoint" />
+            <mxPoint x="1750" y="145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- users → user_follows (1:N following) -->
+        <mxCell id="rel_users_follows_following" value="followed by" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1" source="users" target="user_follows">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="320" y="160" as="sourcePoint" />
+            <mxPoint x="1750" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- products → product_reviews (1:N) -->
+        <mxCell id="rel_products_reviews" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=1;exitY=0.1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#d6b656;" edge="1" parent="1" source="products" target="product_reviews">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="380" y="356" as="sourcePoint" />
+            <mxPoint x="450" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- chat_rooms → chat_messages (1:N) -->
+        <mxCell id="rel_chatrooms_messages" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="chat_rooms" target="chat_messages">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1870" y="500" as="sourcePoint" />
+            <mxPoint x="1870" y="560" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- admins → reports (1:N) -->
+        <mxCell id="rel_admins_reports" value="handles" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;dashed=1;" edge="1" parent="1" source="admins" target="reports">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1750" y="835" as="sourcePoint" />
+            <mxPoint x="1030" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- admins → withdrawals (1:N) -->
+        <mxCell id="rel_admins_withdrawals" value="processes" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERmany;endFill=0;startArrow=ERone;startFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="admins" target="withdrawals">
+          <mxGeometry width="100" height="100" relative="1" as="geometry">
+            <mxPoint x="1750" y="890" as="sourcePoint" />
+            <mxPoint x="1360" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend_title" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="100" width="200" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_key" value="🔑 Primary Key" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="140" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_fk" value="🔗 Foreign Key" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="170" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_unique" value="🔒 Unique Constraint" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="200" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_auth" value="🟦 Auth &amp; Users" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="250" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_wallet" value="🟩 Wallet &amp; Payments" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="280" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_products" value="🟨 Products &amp; Categories" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="310" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_orders" value="🟧 Orders &amp; Forums" style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="340" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_reports" value="🟥 Reports &amp; Admin" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="370" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_withdraw" value="🟪 Bank &amp; Chat" style="text;html=1;strokeColor=#9673a6;fillColor=#e1d5e7;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="400" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend_social" value="⬜ Social &amp; Posts" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="430" width="200" height="25" as="geometry" />
+        </mxCell>
+
+        <!-- Business Rules Box -->
+        <mxCell id="business_rules_title" value="&lt;b&gt;BUSINESS RULES&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="490" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="business_rules_content" value="&lt;b&gt;Payment Flow:&lt;/b&gt;&lt;br&gt;• VNPay/PayPal → Wallet deposit only&lt;br&gt;• Order payment → Wallet deduction&lt;br&gt;• Order earnings → NOT added to seller wallet&lt;br&gt;&lt;br&gt;&lt;b&gt;Order Status Flow:&lt;/b&gt;&lt;br&gt;pending → completed → ready_for_withdrawal&lt;br&gt;(after 3 days) → withdrawing → withdrawn&lt;br&gt;&lt;br&gt;&lt;b&gt;Withdrawal Fee:&lt;/b&gt;&lt;br&gt;• Platform fee: 17% of order total&lt;br&gt;• actualAmount = amount - fee&lt;br&gt;• Fee tracked in payment_history metadata&lt;br&gt;&lt;br&gt;&lt;b&gt;Report &amp; Refund:&lt;/b&gt;&lt;br&gt;• Buyers can report within 3 days&lt;br&gt;• Approved → Refund to buyer wallet&lt;br&gt;• Order status → refunded&lt;br&gt;• Payment history created for refund&lt;br&gt;&lt;br&gt;&lt;b&gt;Social Features:&lt;/b&gt;&lt;br&gt;• Posts can have EXIF metadata from images&lt;br&gt;• Users can vote (upvote/downvote) on posts/comments&lt;br&gt;• Comments support nested replies (parentId)&lt;br&gt;• Users can follow each other with custom notifications&lt;br&gt;• Likes and saves tracked separately&lt;br&gt;&lt;br&gt;&lt;b&gt;Community Structure:&lt;/b&gt;&lt;br&gt;• Forums → Communicates → Posts&lt;br&gt;• Categories → Posts (separate organization)&lt;br&gt;• Communicates can be public/private/restricted" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="2050" y="530" width="380" height="500" as="geometry" />
+        </mxCell>
+
+        <!-- Key Features Box -->
+        <mxCell id="features_title" value="&lt;b&gt;DATABASE TABLES (22 Total)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1380" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="features_content" value="&lt;b&gt;Core System (10 tables):&lt;/b&gt;&lt;br&gt;✅ users, wallets, payment_history&lt;br&gt;✅ products, product_reviews, categories&lt;br&gt;✅ cart_items, orders, reports, notifications&lt;br&gt;&lt;br&gt;&lt;b&gt;Withdrawal System (2 tables):&lt;/b&gt;&lt;br&gt;✅ bank_cards, withdrawals&lt;br&gt;&lt;br&gt;&lt;b&gt;Social Features (6 tables):&lt;/b&gt;&lt;br&gt;✅ posts, post_comments, post_likes&lt;br&gt;✅ saved_posts, votes, user_follows&lt;br&gt;&lt;br&gt;&lt;b&gt;Community (3 tables):&lt;/b&gt;&lt;br&gt;✅ forums, communicates, categories&lt;br&gt;&lt;br&gt;&lt;b&gt;Chat System (2 tables):&lt;/b&gt;&lt;br&gt;✅ chat_rooms, chat_messages&lt;br&gt;&lt;br&gt;&lt;b&gt;Admin (1 table):&lt;/b&gt;&lt;br&gt;✅ admins&lt;br&gt;&lt;br&gt;&lt;b&gt;Key Features:&lt;/b&gt;&lt;br&gt;• Multi-vendor marketplace with digital products&lt;br&gt;• Wallet system with VNPay/PayPal integration&lt;br&gt;• Order lifecycle with 3-day dispute window&lt;br&gt;• Seller withdrawals with 17% platform fee&lt;br&gt;• Social media features (posts, comments, likes, votes)&lt;br&gt;• Forum/community system with nested structure&lt;br&gt;• Real-time chat with rooms and messages&lt;br&gt;• Follow system with custom notifications&lt;br&gt;• Product reviews and ratings&lt;br&gt;• EXIF metadata storage for images&lt;br&gt;• Report system with admin moderation&lt;br&gt;• Comprehensive payment history tracking" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1420" width="520" height="480" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
