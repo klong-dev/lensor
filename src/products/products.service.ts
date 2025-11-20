@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -6,6 +10,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 import { ProductReview } from './entities/product-review.entity';
 import { SupabaseService } from '../supabase/supabase.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class ProductsService {
@@ -15,6 +20,7 @@ export class ProductsService {
     @InjectRepository(ProductReview)
     private reviewRepository: Repository<ProductReview>,
     private supabaseService: SupabaseService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(createProductDto: CreateProductDto, userId: string) {
@@ -84,6 +90,7 @@ export class ProductsService {
           reviewCount: product.reviewCount,
           sellCount: product.sellCount,
           category: product.category,
+          status: product.status,
         };
       }),
     );
@@ -404,5 +411,55 @@ export class ProductsService {
       rating: avgRating,
       reviewCount: reviews.length,
     });
+  }
+
+  // ADMIN METHODS
+  async handleAdminAction(productId: string, action: string) {
+    const product = await this.productRepository.findOne({
+      where: { id: productId, deletedAt: IsNull() },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${productId} not found`);
+    }
+
+    if (action === 'block') {
+      if (product.status === 'blocked')
+        throw new BadRequestException('Product is already blocked');
+      product.status = 'blocked';
+      await this.productRepository.save(product);
+
+      // Notify the user about the block
+      await this.notificationsService.createNotification(
+        product.userId,
+        'product_blocked_by_admin',
+        'Product Blocked',
+        `Your product "${product.title}" has been blocked by the admin.`,
+      );
+      return;
+    }
+
+    if (action === 'unblock') {
+      if (product.status !== 'blocked')
+        throw new BadRequestException('Product is not blocked');
+      product.status = 'active';
+      await this.productRepository.save(product);
+
+      // Notify the user about the block
+      await this.notificationsService.createNotification(
+        product.userId,
+        'product_unblocked_by_admin',
+        'Product Unblocked',
+        `Your product "${product.title}" has been unblocked by the admin.`,
+      );
+      return;
+    }
+
+    if (action === 'delete') {
+      await this.productRepository.update(productId, {
+        deletedAt: new Date(),
+      });
+      return;
+    }
   }
 }

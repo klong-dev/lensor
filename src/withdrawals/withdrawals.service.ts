@@ -156,6 +156,7 @@ export class WithdrawalsService {
     withdrawalId: string,
     adminId: string,
     adminActionDto: AdminWithdrawalActionDto,
+    paymentProofImageUrl?: string[],
   ) {
     const withdrawal = await this.withdrawalRepository.findOne({
       where: { id: withdrawalId },
@@ -171,72 +172,100 @@ export class WithdrawalsService {
 
     const { action, adminResponse } = adminActionDto;
 
-    // Update withdrawal
+    // Update basic withdrawal info
     withdrawal.status = action;
     withdrawal.adminResponse = adminResponse || '';
     withdrawal.adminId = adminId;
     withdrawal.processedAt = new Date();
 
-    await this.withdrawalRepository.save(withdrawal);
+    if (action === 'approved') {
+      if (!paymentProofImageUrl) {
+        throw new BadRequestException(
+          'Payment proof image is required for approval.',
+        );
+      }
+      withdrawal.paymentProofImageUrl = paymentProofImageUrl;
+    }
+
+    // Save changes before proceeding
+    const updatedWithdrawal = await this.withdrawalRepository.save(withdrawal);
 
     if (action === 'approved') {
-      // Create payment history for withdrawal (no wallet deduction needed)
+      // Create payment history for the successful withdrawal
       await this.paymentHistoryService.createHistory({
-        userId: withdrawal.userId,
+        userId: updatedWithdrawal.userId,
         orderId: null,
         paymentMethod: 'bank_transfer',
         transactionType: 'withdrawal',
-        amount: Number(withdrawal.actualAmount), // Amount actually received
+        amount: Number(updatedWithdrawal.actualAmount),
         status: 'completed',
         transactionId: withdrawalId,
-        description: `Rút tiền về ${withdrawal.bankInfo.bankName} - ${withdrawal.bankInfo.accountNumber}`,
+        description: `Rút tiền về ${updatedWithdrawal.bankInfo.bankName} - ${updatedWithdrawal.bankInfo.accountNumber}`,
         metadata: {
           withdrawalId,
-          orderIds: withdrawal.orderIds,
-          bankInfo: withdrawal.bankInfo,
-          totalAmount: withdrawal.amount,
-          fee: withdrawal.fee,
+          orderIds: updatedWithdrawal.orderIds,
+          bankInfo: updatedWithdrawal.bankInfo,
+          totalAmount: updatedWithdrawal.amount,
+          fee: updatedWithdrawal.fee,
           feeRate: '17%',
-          actualAmount: withdrawal.actualAmount,
+          actualAmount: updatedWithdrawal.actualAmount,
+          paymentProofImageUrl: updatedWithdrawal.paymentProofImageUrl,
         },
-        balanceBefore: 0, // Not using wallet for order earnings
-        balanceAfter: 0,
+        balanceBefore: 0, // Not applicable for direct withdrawal
+        balanceAfter: 0, // Not applicable for direct withdrawal
       });
 
-      // Update orders status to 'withdrawn'
+      // Finalize order statuses
       await this.ordersService.updateOrdersStatus(
-        withdrawal.orderIds,
+        updatedWithdrawal.orderIds,
         'withdrawn',
       );
 
-      // Notify seller - Withdrawal approved with fee breakdown
+      // Notify the seller
       await this.notificationsService.createNotification(
-        withdrawal.userId,
+        updatedWithdrawal.userId,
         'withdrawal_approved',
         'Yêu cầu rút tiền đã được chấp nhận',
-        `Yêu cầu rút tiền đã được chấp nhận:\n• Tổng tiền đơn hàng: ${Number(withdrawal.amount).toLocaleString('vi-VN')} VNĐ\n• Phí hệ thống (17%): ${Number(withdrawal.fee).toLocaleString('vi-VN')} VNĐ\n• Số tiền thực nhận: ${Number(withdrawal.actualAmount).toLocaleString('vi-VN')} VNĐ\n\nTiền sẽ được chuyển về tài khoản ${withdrawal.bankInfo.bankName} - ${withdrawal.bankInfo.accountNumber} (${withdrawal.bankInfo.accountHolder}) trong vòng 1-3 ngày làm việc.${adminResponse ? `\n\nGhi chú từ admin: ${adminResponse}` : ''}`,
+        `Yêu cầu rút tiền đã được chấp nhận:\n• Tổng tiền đơn hàng: ${Number(
+          updatedWithdrawal.amount,
+        ).toLocaleString('vi-VN')} VNĐ\n• Phí hệ thống (17%): ${Number(
+          updatedWithdrawal.fee,
+        ).toLocaleString('vi-VN')} VNĐ\n• Số tiền thực nhận: ${Number(
+          updatedWithdrawal.actualAmount,
+        ).toLocaleString('vi-VN')} VNĐ\n\nTiền sẽ được chuyển về tài khoản ${
+          updatedWithdrawal.bankInfo.bankName
+        } - ${updatedWithdrawal.bankInfo.accountNumber} (${
+          updatedWithdrawal.bankInfo.accountHolder
+        }) trong vòng 1-3 ngày làm việc.${
+          adminResponse ? `\n\nGhi chú từ admin: ${adminResponse}` : ''
+        }`,
         {
           withdrawalId,
-          totalAmount: withdrawal.amount,
-          fee: withdrawal.fee,
-          actualAmount: withdrawal.actualAmount,
-          bankInfo: withdrawal.bankInfo,
+          totalAmount: updatedWithdrawal.amount,
+          fee: updatedWithdrawal.fee,
+          actualAmount: updatedWithdrawal.actualAmount,
+          bankInfo: updatedWithdrawal.bankInfo,
+          paymentProofImageUrl: updatedWithdrawal.paymentProofImageUrl,
         },
         `/withdrawals/${withdrawalId}`,
       );
     } else if (action === 'rejected') {
-      // Restore orders to ready_for_withdrawal
+      // Restore orders to their previous state
       await this.ordersService.updateOrdersStatus(
         withdrawal.orderIds,
         'ready_for_withdrawal',
       );
 
-      // Notify seller - Withdrawal rejected
+      // Notify the seller of the rejection
       await this.notificationsService.createNotification(
         withdrawal.userId,
         'withdrawal_rejected',
         'Yêu cầu rút tiền bị từ chối',
-        `Yêu cầu rút tiền ${Number(withdrawal.amount).toLocaleString('vi-VN')} VNĐ đã bị từ chối. Lý do: ${adminResponse || 'Không có lý do cụ thể'}. Vui lòng kiểm tra lại thông tin thẻ ngân hàng hoặc liên hệ admin.`,
+        `Yêu cầu rút tiền ${Number(withdrawal.amount).toLocaleString(
+          'vi-VN',
+        )} VNĐ đã bị từ chối. Lý do: ${
+          adminResponse || 'Không có lý do cụ thể'
+        }. Vui lòng kiểm tra lại thông tin thẻ ngân hàng hoặc liên hệ admin.`,
         {
           withdrawalId,
           amount: withdrawal.amount,
@@ -246,6 +275,6 @@ export class WithdrawalsService {
       );
     }
 
-    return withdrawal;
+    return updatedWithdrawal;
   }
 }
