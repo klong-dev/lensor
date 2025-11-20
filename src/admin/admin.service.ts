@@ -138,9 +138,9 @@ export class AdminService {
   }
 
   async getRevenueStatistics() {
-    // Lấy tất cả orders có status = 'completed' (đã rút tiền)
+    // Lấy tất cả orders có status = 'withdrawn' (đã rút tiền)
     const withdrawnOrders = await this.orderRepository.find({
-      where: { status: 'completed' },
+      where: { status: 'withdrawn' },
       select: ['id', 'totalAmount', 'createdAt', 'items'],
     });
 
