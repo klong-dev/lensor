@@ -31,6 +31,18 @@ export class AdminWithdrawalsController {
     return { data: withdrawals };
   }
 
+  @Get('statistics')
+  async getWithdrawalStatistics(
+    @Query('year') year?: number,
+    @Query('month') month?: number,
+  ) {
+    const stats = await this.withdrawalsService.getWithdrawalStatisticsByAdmin({
+      year,
+      month,
+    });
+    return { data: stats };
+  }
+
   @Post(':id/action')
   @UseInterceptors(FilesInterceptor('paymentProof', 5))
   async handleWithdrawal(
