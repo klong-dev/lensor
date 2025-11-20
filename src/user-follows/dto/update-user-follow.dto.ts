@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserFollowDto } from './create-user-follow.dto';
+import { IsOptional, IsBoolean } from 'class-validator';
 
-export class UpdateUserFollowDto extends PartialType(CreateUserFollowDto) {}
+export class UpdateUserFollowDto {
+  @IsOptional()
+  @IsBoolean()
+  notifyOnPost?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  notifyOnComment?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  notifyOnVote?: boolean;
+}

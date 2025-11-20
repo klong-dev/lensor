@@ -24,8 +24,8 @@ export class ProfileController {
   }
 
   @Get('stats')
-  getMyStats(@CurrentUser('sub') userId: string) {
-    return this.profileService.getStats(userId);
+  getMyStats(@CurrentUser() user: { userId: string }) {
+    return this.profileService.getStats(user.userId);
   }
 
   @Public()
@@ -58,25 +58,25 @@ export class ProfileController {
 
   @Post('follow/:userId')
   follow(
-    @CurrentUser('sub') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('userId') followingId: string,
   ) {
-    return this.profileService.follow(followerId, followingId);
+    return this.profileService.follow(user.userId, followingId);
   }
 
   @Delete('unfollow/:userId')
   unfollow(
-    @CurrentUser('sub') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('userId') followingId: string,
   ) {
-    return this.profileService.unfollow(followerId, followingId);
+    return this.profileService.unfollow(user.userId, followingId);
   }
 
   @Get('is-following/:userId')
   isFollowing(
-    @CurrentUser('sub') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('userId') followingId: string,
   ) {
-    return this.profileService.isFollowing(followerId, followingId);
+    return this.profileService.isFollowing(user.userId, followingId);
   }
 }
