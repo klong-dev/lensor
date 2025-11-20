@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserFollow } from './entities/user-follow.entity';
@@ -22,6 +26,7 @@ export class UserFollowsService {
       notifyOnVote?: boolean;
     },
   ): Promise<UserFollow> {
+    // Check if already following
     const existing = await this.userFollowRepository.findOne({
       where: {
         followerId,
@@ -30,7 +35,7 @@ export class UserFollowsService {
     });
 
     if (existing) {
-      return existing;
+      throw new ConflictException('You are already following this user');
     }
 
     const follow = this.userFollowRepository.create({
@@ -44,21 +49,33 @@ export class UserFollowsService {
     const saved = await this.userFollowRepository.save(follow);
 
     // Create notification for followed user
-    await this.notificationsService.create({
-      userId: followingId,
-      action: 'started following you',
-      targetId: followerId,
-      targetType: 'user',
-      category: 'social',
-      icon: '👤',
-      metadata: { followerId },
-    });
+    try {
+      await this.notificationsService.create({
+        userId: followingId,
+        action: 'started following you',
+        targetId: followerId,
+        targetType: 'user',
+        category: 'social',
+        icon: '👤',
+        metadata: { followerId },
+      });
+    } catch (error) {
+      // Log error but don't fail the follow operation
+      console.error('Failed to create follow notification:', error);
+    }
 
     return saved;
   }
 
   async unfollow(followerId: string, followingId: string): Promise<void> {
-    await this.userFollowRepository.delete({ followerId, followingId });
+    const result = await this.userFollowRepository.delete({
+      followerId,
+      followingId,
+    });
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Follow relationship not found');
+    }
   }
 
   async updateSettings(
@@ -74,10 +91,8 @@ export class UserFollowsService {
       throw new NotFoundException('Follow relationship not found');
     }
 
-    await this.userFollowRepository.update(follow.id, updateDto);
-    return await this.userFollowRepository.findOne({
-      where: { id: follow.id },
-    });
+    Object.assign(follow, updateDto);
+    return await this.userFollowRepository.save(follow);
   }
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
@@ -90,7 +105,7 @@ export class UserFollowsService {
   async getFollowSettings(
     followerId: string,
     followingId: string,
-  ): Promise<UserFollow> {
+  ): Promise<UserFollow | null> {
     return await this.userFollowRepository.findOne({
       where: { followerId, followingId },
     });
@@ -126,16 +141,6 @@ export class UserFollowsService {
     return { following, total };
   }
 
-  async shouldNotifyOnPost(
-    followerId: string,
-    followingId: string,
-  ): Promise<boolean> {
-    const follow = await this.userFollowRepository.findOne({
-      where: { followerId, followingId },
-    });
-    return follow?.notifyOnPost ?? false;
-  }
-
   async getFollowersToNotify(
     userId: string,
     eventType: 'post' | 'comment' | 'vote',
@@ -152,5 +157,17 @@ export class UserFollowsService {
     });
 
     return followers.map((f) => f.followerId);
+  }
+
+  async getFollowerCount(userId: string): Promise<number> {
+    return await this.userFollowRepository.count({
+      where: { followingId: userId },
+    });
+  }
+
+  async getFollowingCount(userId: string): Promise<number> {
+    return await this.userFollowRepository.count({
+      where: { followerId: userId },
+    });
   }
 }
