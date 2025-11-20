@@ -143,11 +143,13 @@ export class UserFollowsService {
     return {
       following: await Promise.all(
         following.map(async (follow) => {
-          const author = await this.supabaseService.getUserById(follow.id);
+          const author = await this.supabaseService.getUserById(
+            follow.followingId,
+          );
 
           return {
             ...follow,
-            id: author?.id || follow.id,
+            id: author?.id || follow.followingId,
             name:
               author?.user_metadata?.name || author?.email || 'Unknown User',
             avatar:
