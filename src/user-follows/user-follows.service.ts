@@ -125,7 +125,25 @@ export class UserFollowsService {
       order: { createdAt: 'DESC' },
     });
 
-    return { followers, total };
+    return {
+      followers: await Promise.all(
+        followers.map(async (follow) => {
+          const author = await this.supabaseService.getUserById(
+            follow.followerId,
+          );
+
+          return {
+            ...follow,
+            id: author?.id || follow.followerId,
+            name:
+              author?.user_metadata?.name || author?.email || 'Unknown User',
+            avatar:
+              author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
+          };
+        }),
+      ),
+      total,
+    };
   }
 
   async getFollowing(
