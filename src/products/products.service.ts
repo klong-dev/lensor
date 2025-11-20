@@ -121,6 +121,7 @@ export class ProductsService {
           sellCount: product.sellCount,
           downloads: product.downloads,
           category: product.category,
+          status: product.status,
           createdAt: product.createdAt,
           updatedAt: product.updatedAt,
         };
@@ -218,6 +219,7 @@ export class ProductsService {
       includesCount: product.includesCount,
       features,
       specifications,
+      status: product.status,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
       warranty,

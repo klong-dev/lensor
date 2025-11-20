@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Order } from './entities/order.entity';
@@ -142,6 +146,16 @@ export class OrdersService {
 
     if (!cartItems || cartItems.length === 0) {
       throw new BadRequestException('Cart is empty');
+    }
+
+    // Check all items in cart are not blocked or deleted
+    for (const item of cartItems) {
+      const product = await this.productsService.findOne(item.productId);
+      if (!product || product.status === 'blocked') {
+        throw new ForbiddenException(
+          `Product ${item.product.title} is not available for purchase`,
+        );
+      }
     }
 
     // Calculate total amount
