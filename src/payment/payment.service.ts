@@ -90,6 +90,7 @@ export class PaymentService {
     amount: number,
     orderInfo: string,
     ipAddr: string = '127.0.0.1',
+    isMobile: boolean = false,
   ) {
     // Generate unique transaction reference
     const txnRef = `VNPAY_${userId}_${Date.now()}`;
@@ -106,9 +107,11 @@ export class PaymentService {
 
     // VNPay parameters (sandbox mode)
     const vnpUrl = this.configService.get<string>('VNPAY_URL');
-    const returnUrl =
-      this.configService.get<string>('VNPAY_RETURN_URL') ||
-      'http://localhost:3005/payment/vnpay-return';
+    const returnUrl = isMobile
+      ? this.configService.get<string>('VNPAY_RETURN_URL_MOBILE') ||
+        'exp://lensor.app'
+      : this.configService.get<string>('VNPAY_RETURN_URL') ||
+        'http://localhost:3005/payment/vnpay-return';
 
     const orderInfoText = orderInfo || `Nap tien vao vi ${amount} VND`;
 

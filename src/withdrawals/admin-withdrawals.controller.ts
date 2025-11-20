@@ -51,8 +51,6 @@ export class AdminWithdrawalsController {
     @CurrentUser() user: { userId: string },
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    console.log('Files received:', files);
-
     // Upload evidence files if provided
     let paymentProofImageUrl: string[] = [];
     if (files && files.length > 0) {
@@ -63,8 +61,6 @@ export class AdminWithdrawalsController {
         tempProofId,
       );
     }
-
-    console.log('Payment Proof Image URLs:', paymentProofImageUrl);
 
     const withdrawal = await this.withdrawalsService.handleAdminAction(
       withdrawalId,
