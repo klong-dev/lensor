@@ -10,7 +10,7 @@ import { ProductsService } from './products.service';
 export class AdminProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Post('/:id/action')
+  @Post(':id/action')
   async adminAction(
     @Param('id') productId: string,
     @Body() adminActionDto: AdminActionDto,
