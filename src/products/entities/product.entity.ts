@@ -165,6 +165,13 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   warranty: string; // JSON string
 
+  @Column({
+    type: 'enum',
+    enum: ['active', 'blocked', 'deleted'],
+    default: 'active',
+  })
+  status: 'active' | 'blocked' | 'deleted';
+
   @OneToMany(() => ProductReview, (review) => review.product)
   reviews: ProductReview[];
 

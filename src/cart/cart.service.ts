@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
@@ -70,7 +74,11 @@ export class CartService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-
+    if (product.status === 'blocked') {
+      throw new ForbiddenException(
+        `Product ${product.name} is not available for purchase`,
+      );
+    }
     // Check if item already in cart
     let cartItem = await this.cartItemRepository.findOne({
       where: { userId, productId },
@@ -100,6 +108,12 @@ export class CartService {
 
     if (!item) {
       throw new NotFoundException('Cart item not found');
+    }
+
+    if (item.product.status === 'blocked') {
+      throw new ForbiddenException(
+        `Product ${item.product.title} is not available for purchase`,
+      );
     }
 
     item.quantity = quantity;

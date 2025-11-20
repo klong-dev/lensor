@@ -61,6 +61,7 @@ npm run start:dev
 ```
 
 Check logs for:
+
 ```
 [VisionService] Google Cloud Vision initialized successfully
 ```
@@ -77,11 +78,13 @@ Check logs for:
 ### NSFW Detection Logic
 
 Image is marked as NSFW if:
+
 - **Adult content**: LIKELY or VERY_LIKELY
 - **Violence**: LIKELY or VERY_LIKELY
 - **Racy content**: VERY_LIKELY
 
 SafeSearch levels:
+
 - `UNKNOWN`: Unknown
 - `VERY_UNLIKELY`: Very unlikely
 - `UNLIKELY`: Unlikely
@@ -145,6 +148,7 @@ npm run typeorm migration:run
 ### Without API Key (Development)
 
 If `GOOGLE_APPLICATION_CREDENTIALS` is not set:
+
 - `isNSFW` will default to `false`
 - Warning logged: "Vision API disabled, skipping NSFW check"
 - Posts work normally
@@ -170,11 +174,13 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 ## Cost Considerations
 
 **Google Cloud Vision Pricing** (as of 2024):
+
 - First 1,000 requests/month: **FREE**
 - 1,001 - 5,000,000: $1.50 per 1,000 images
 - 5,000,001+: $0.60 per 1,000 images
 
 **Optimization tips**:
+
 - Only check images, not text posts
 - Cache results to avoid re-checking same image
 - Use async processing (already implemented)
@@ -185,7 +191,8 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 
 **Cause**: `GOOGLE_APPLICATION_CREDENTIALS` not set
 
-**Solution**: 
+**Solution**:
+
 1. Download credentials JSON
 2. Set env variable
 3. Restart server
@@ -195,6 +202,7 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 **Cause**: Service account lacks Vision API permissions
 
 **Solution**:
+
 1. Go to IAM & Admin
 2. Add role: "Cloud Vision API User"
 3. Save changes
@@ -202,11 +210,13 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 ### Images not being checked
 
 **Check logs** for errors:
+
 ```
 [VisionService] Error checking NSFW for <url>: <error>
 ```
 
 **Common issues**:
+
 - Image URL not accessible
 - Network timeout (default: 10s)
 - Invalid image format
@@ -214,6 +224,7 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 ## Security Notes
 
 ⚠️ **Important**:
+
 - Keep `google-credentials.json` secret
 - Add to `.gitignore`
 - Never commit credentials to repository
@@ -222,6 +233,7 @@ const annotation = await this.visionService.getSafeSearchAnnotation(imageUrl);
 ## Future Enhancements
 
 Potential improvements:
+
 - [ ] Batch processing for multiple images
 - [ ] Cache SafeSearch results
 - [ ] Admin dashboard to review flagged content
@@ -232,5 +244,6 @@ Potential improvements:
 ## Support
 
 For issues, contact the development team or check:
+
 - [Google Cloud Vision Docs](https://cloud.google.com/vision/docs)
 - [SafeSearch API Reference](https://cloud.google.com/vision/docs/detecting-safe-search)
