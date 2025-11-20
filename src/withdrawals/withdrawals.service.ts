@@ -218,7 +218,7 @@ export class WithdrawalsService {
       // Finalize order statuses
       await this.ordersService.updateOrdersStatus(
         updatedWithdrawal.orderIds,
-        'withdrawn',
+        'completed',
       );
 
       // Notify the seller
