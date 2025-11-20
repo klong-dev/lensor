@@ -277,4 +277,127 @@ export class WithdrawalsService {
 
     return updatedWithdrawal;
   }
+
+  async getWithdrawalStatisticsByAdmin(options: {
+    year?: number;
+    month?: number;
+  }) {
+    const { year, month } = options;
+
+    const queryBuilder =
+      this.withdrawalRepository.createQueryBuilder('withdrawal');
+
+    queryBuilder.where('withdrawal.status = :status', { status: 'approved' });
+
+    // Nếu có month thì BẮT BUỘC phải có year
+    if (month && !year) {
+      throw new BadRequestException('Year is required when filtering by month');
+    }
+
+    if (year) {
+      queryBuilder.andWhere(
+        'EXTRACT(YEAR FROM withdrawal.processedAt) = :year',
+        { year },
+      );
+    }
+
+    if (month) {
+      queryBuilder.andWhere(
+        'EXTRACT(MONTH FROM withdrawal.processedAt) = :month',
+        { month },
+      );
+    }
+
+    const result = await queryBuilder
+      .select('SUM(withdrawal.amount)', 'totalAmount')
+      .addSelect('SUM(withdrawal.fee)', 'totalFee')
+      .addSelect('SUM(withdrawal.actualAmount)', 'totalActualAmount')
+      .addSelect('COUNT(withdrawal.id)', 'totalWithdrawals')
+      .getRawOne();
+
+    const formatVND = (amount: number) => {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0,
+      }).format(amount || 0);
+    };
+
+    const totalAmount = parseFloat(result.totalAmount) || 0;
+    const totalFee = parseFloat(result.totalFee) || 0;
+    const totalActualAmount = parseFloat(result.totalActualAmount) || 0;
+    const totalWithdrawals = parseInt(result.totalWithdrawals, 10) || 0;
+
+    return {
+      totalWithdrawals,
+      totalAmount,
+      totalFee,
+      totalActualAmount,
+      formattedTotalAmount: formatVND(totalAmount),
+      formattedTotalFee: formatVND(totalFee),
+      formattedTotalActualAmount: formatVND(totalActualAmount),
+      filters: {
+        year: year || 'all',
+        month: month || 'all',
+      },
+    };
+  }
+
+  async getWithdrawalStatisticsByUser(
+    userId: string,
+    options: {
+      year?: number;
+      month?: number;
+    },
+  ) {
+    const { year, month } = options;
+
+    const queryBuilder =
+      this.withdrawalRepository.createQueryBuilder('withdrawal');
+
+    queryBuilder.where('withdrawal.status = :status', { status: 'approved' });
+    queryBuilder.andWhere('withdrawal.userId = :userId', { userId });
+
+    // Nếu có month thì BẮT BUỘC phải có year
+    if (month && !year) {
+      throw new BadRequestException('Year is required when filtering by month');
+    }
+
+    if (year) {
+      queryBuilder.andWhere(
+        'EXTRACT(YEAR FROM withdrawal.processedAt) = :year',
+        { year },
+      );
+    }
+
+    if (month) {
+      queryBuilder.andWhere(
+        'EXTRACT(MONTH FROM withdrawal.processedAt) = :month',
+        { month },
+      );
+    }
+
+    const result = await queryBuilder
+      .select('SUM(withdrawal.amount)', 'totalAmount')
+      .addSelect('SUM(withdrawal.fee)', 'totalFee')
+      .addSelect('SUM(withdrawal.actualAmount)', 'totalActualAmount')
+      .addSelect('COUNT(withdrawal.id)', 'totalWithdrawals')
+      .getRawOne();
+
+    const totalAmount = parseFloat(result.totalAmount) || 0;
+    const totalFee = parseFloat(result.totalFee) || 0;
+    const totalActualAmount = parseFloat(result.totalActualAmount) || 0;
+    const totalWithdrawals = parseInt(result.totalWithdrawals, 10) || 0;
+
+    return {
+      totalWithdrawals,
+      totalAmount,
+      totalFee,
+      totalActualAmount,
+      filters: {
+        year: year || 'all',
+        month: month || 'all',
+      },
+    };
+  }
 }
