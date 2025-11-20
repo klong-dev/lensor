@@ -26,17 +26,17 @@ export class UserFollowsController {
   // Follow a user
   @Post(':followingId')
   async follow(
-    @CurrentUser('userId') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('followingId', ParseUUIDPipe) followingId: string,
     @Body() createUserFollowDto?: CreateUserFollowDto,
   ) {
     // Prevent self-follow
-    if (followerId === followingId) {
+    if (user.userId === followingId) {
       throw new BadRequestException('You cannot follow yourself');
     }
 
     const follow = await this.userFollowsService.follow(
-      followerId,
+      user.userId,
       followingId,
       {
         notifyOnPost: createUserFollowDto?.notifyOnPost ?? true,
@@ -56,10 +56,10 @@ export class UserFollowsController {
   @Delete(':followingId')
   @HttpCode(HttpStatus.OK)
   async unfollow(
-    @CurrentUser('userId') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('followingId', ParseUUIDPipe) followingId: string,
   ) {
-    await this.userFollowsService.unfollow(followerId, followingId);
+    await this.userFollowsService.unfollow(user.userId, followingId);
 
     return {
       success: true,
@@ -70,12 +70,12 @@ export class UserFollowsController {
   // Update notification settings for a follow
   @Patch(':followingId/settings')
   async updateSettings(
-    @CurrentUser('userId') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('followingId', ParseUUIDPipe) followingId: string,
     @Body() updateUserFollowDto: UpdateUserFollowDto,
   ) {
     const updated = await this.userFollowsService.updateSettings(
-      followerId,
+      user.userId,
       followingId,
       updateUserFollowDto,
     );
@@ -90,11 +90,11 @@ export class UserFollowsController {
   // Check if current user is following another user
   @Get('check/:userId')
   async checkFollowing(
-    @CurrentUser('userId') followerId: string,
+    @CurrentUser() user: { userId: string },
     @Param('userId', ParseUUIDPipe) followingId: string,
   ) {
     const isFollowing = await this.userFollowsService.isFollowing(
-      followerId,
+      user.userId,
       followingId,
     );
 
@@ -106,8 +106,8 @@ export class UserFollowsController {
 
   // Get current user's followers
   @Get('followers')
-  async getMyFollowers(@CurrentUser('userId') userId: string) {
-    const result = await this.userFollowsService.getFollowers(userId);
+  async getMyFollowers(@CurrentUser() user: { userId: string }) {
+    const result = await this.userFollowsService.getFollowers(user.userId);
 
     return {
       success: true,
@@ -117,8 +117,8 @@ export class UserFollowsController {
 
   // Get users that current user is following
   @Get('following')
-  async getMyFollowing(@CurrentUser('userId') userId: string) {
-    const result = await this.userFollowsService.getFollowing(userId);
+  async getMyFollowing(@CurrentUser() user: { userId: string }) {
+    const result = await this.userFollowsService.getFollowing(user.userId);
 
     return {
       success: true,
