@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { UserFollow } from './entities/user-follow.entity';
 import { UpdateUserFollowDto } from './dto/update-user-follow.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class UserFollowsService {
@@ -15,6 +16,7 @@ export class UserFollowsService {
     @InjectRepository(UserFollow)
     private userFollowRepository: Repository<UserFollow>,
     private notificationsService: NotificationsService,
+    private supabaseService: SupabaseService,
   ) {}
 
   async follow(
@@ -138,7 +140,23 @@ export class UserFollowsService {
       order: { createdAt: 'DESC' },
     });
 
-    return { following, total };
+    return {
+      following: await Promise.all(
+        following.map(async (follow) => {
+          const author = await this.supabaseService.getUserById(follow.id);
+
+          return {
+            ...follow,
+            id: author?.id || follow.id,
+            name:
+              author?.user_metadata?.name || author?.email || 'Unknown User',
+            avatar:
+              author?.user_metadata?.avatar_url || '/images/default_avatar.jpg',
+          };
+        }),
+      ),
+      total,
+    };
   }
 
   async getFollowersToNotify(
