@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -228,6 +229,8 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto, userId: string) {
+    console.log('🔍 Finding product:', id);
+
     const product = await this.productRepository.findOne({
       where: { id, deletedAt: IsNull() },
     });
@@ -237,40 +240,110 @@ export class ProductsService {
     }
 
     if (product.userId !== userId) {
-      throw new NotFoundException(
+      throw new ForbiddenException(
         'You do not have permission to update this product',
       );
     }
 
-    const updateData: any = { ...updateProductDto };
+    console.log('📝 Building update data...');
+    const updateData: any = {};
 
-    if (updateProductDto.imagePairs) {
+    // Only update fields that are provided
+    if (updateProductDto.title !== undefined) {
+      updateData.title = updateProductDto.title;
+    }
+    if (updateProductDto.description !== undefined) {
+      updateData.description = updateProductDto.description;
+    }
+    if (updateProductDto.price !== undefined) {
+      updateData.price = updateProductDto.price;
+    }
+    if (updateProductDto.originalPrice !== undefined) {
+      updateData.originalPrice = updateProductDto.originalPrice;
+    }
+    if (updateProductDto.discount !== undefined) {
+      updateData.discount = updateProductDto.discount;
+    }
+    if (updateProductDto.category !== undefined) {
+      updateData.category = updateProductDto.category;
+    }
+    if (updateProductDto.fileFormat !== undefined) {
+      updateData.fileFormat = updateProductDto.fileFormat;
+    }
+    if (updateProductDto.fileSize !== undefined) {
+      updateData.fileSize = updateProductDto.fileSize;
+    }
+    if (updateProductDto.includesCount !== undefined) {
+      updateData.includesCount = updateProductDto.includesCount;
+    }
+
+    // Handle image updates
+    if (updateProductDto.image !== undefined) {
+      updateData.image = updateProductDto.image;
+    }
+    if (updateProductDto.thumbnail !== undefined) {
+      updateData.thumbnail = updateProductDto.thumbnail;
+    }
+
+    // Handle imageMetadata
+    if (updateProductDto['imageMetadata'] !== undefined) {
+      updateData.imageMetadata = updateProductDto['imageMetadata'];
+    }
+
+    // Handle JSON/Array fields with proper serialization
+    if (updateProductDto.imagePairs !== undefined) {
       updateData.imagePairs = JSON.stringify(updateProductDto.imagePairs);
     }
-    if (updateProductDto.presetFiles) {
+
+    if (updateProductDto.presetFiles !== undefined) {
       updateData.presetFiles = JSON.stringify(updateProductDto.presetFiles);
     }
-    if (updateProductDto.tags) {
-      updateData.tags = updateProductDto.tags.join(',');
+
+    if (updateProductDto.tags !== undefined) {
+      updateData.tags = Array.isArray(updateProductDto.tags)
+        ? updateProductDto.tags.join(',')
+        : updateProductDto.tags;
     }
-    if (updateProductDto.compatibility) {
-      updateData.compatibility = updateProductDto.compatibility.join(',');
+
+    if (updateProductDto.compatibility !== undefined) {
+      updateData.compatibility = Array.isArray(updateProductDto.compatibility)
+        ? updateProductDto.compatibility.join(',')
+        : updateProductDto.compatibility;
     }
-    if (updateProductDto.features) {
-      updateData.features = updateProductDto.features.join(',');
+
+    if (updateProductDto.features !== undefined) {
+      updateData.features = Array.isArray(updateProductDto.features)
+        ? updateProductDto.features.join(',')
+        : updateProductDto.features;
     }
-    if (updateProductDto.specifications) {
+
+    if (updateProductDto.specifications !== undefined) {
       updateData.specifications = JSON.stringify(
         updateProductDto.specifications,
       );
     }
-    if (updateProductDto.warranty) {
+
+    if (updateProductDto.warranty !== undefined) {
       updateData.warranty = JSON.stringify(updateProductDto.warranty);
     }
 
-    await this.productRepository.update(id, updateData);
+    console.log('💾 Updating product in database...');
+    console.log('Update data:', Object.keys(updateData));
 
-    return await this.findOne(id);
+    try {
+      // Update the product
+      await this.productRepository.update(id, updateData);
+      console.log('✅ Product updated successfully');
+
+      // Fetch and return the updated product
+      const updatedProduct = await this.findOne(id);
+      return updatedProduct;
+    } catch (error) {
+      console.error('❌ Error updating product:', error);
+      throw new BadRequestException(
+        `Failed to update product: ${error.message}`,
+      );
+    }
   }
 
   async remove(id: string, userId: string) {

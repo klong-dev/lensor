@@ -189,17 +189,127 @@ export class ProductsController {
   }
 
   @Patch('products/:id')
+  @UseInterceptors(AnyFilesInterceptor(multerConfig))
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser() user: { userId: string },
   ) {
+    console.log('📝 Updating product:', id);
+    console.log('📦 Update data:', updateProductDto);
+    console.log('📁 Files received:', files?.length || 0);
+
+    // Process new main image if uploaded
+    if (files && files.length > 0) {
+      const productImage = getFile(files, 'image');
+
+      if (productImage) {
+        try {
+          console.log('🖼️ Processing new main image...');
+          const result = await this.imageProcessingService.processSingleImage(
+            productImage,
+            user.userId,
+          );
+          updateProductDto.image = result.original;
+          updateProductDto.thumbnail = result.thumbnail;
+
+          if (result.metadata) {
+            updateProductDto['imageMetadata'] = result.metadata;
+          }
+          console.log('✅ Main image processed successfully');
+        } catch (error) {
+          console.error('❌ Error processing main image:', error);
+          throw error;
+        }
+      }
+
+      // Process new imagePairs if uploaded
+      const imagePairs = getFileByGroupFileName(files, 'imagePairs');
+      if (imagePairs && imagePairs.length > 0) {
+        try {
+          console.log('🖼️ Processing image pairs...');
+          const pairs: Array<{ before: string; after: string }> = [];
+
+          for (const imagePair of imagePairs) {
+            const processedBefore =
+              await this.imageProcessingService.processSingleImage(
+                imagePair.before,
+                user.userId,
+              );
+            const processedAfter =
+              await this.imageProcessingService.processSingleImage(
+                imagePair.after,
+                user.userId,
+              );
+            pairs.push({
+              before: processedBefore.original,
+              after: processedAfter.original,
+            });
+          }
+
+          updateProductDto.imagePairs = pairs;
+          console.log('✅ Image pairs processed successfully');
+        } catch (error) {
+          console.error('❌ ImagePairs processing failed:', error);
+          throw error;
+        }
+      }
+
+      // Process new preset files if uploaded
+      const presetFiles = files?.filter(
+        (file) =>
+          file.fieldname === 'presetFiles' ||
+          file.fieldname.startsWith('presetFiles['),
+      );
+
+      if (presetFiles && presetFiles.length > 0) {
+        try {
+          console.log('📄 Processing preset files...');
+          const uploadedPresets: string[] = [];
+          const allowedExtensions = ['.xmp', '.lrtemplate', '.dcp', '.dng'];
+
+          for (const presetFile of presetFiles) {
+            const fileExt = presetFile.originalname
+              .toLowerCase()
+              .substring(presetFile.originalname.lastIndexOf('.'));
+
+            if (!allowedExtensions.includes(fileExt)) {
+              console.warn(
+                `⚠️ Skipping invalid preset file: ${presetFile.originalname}`,
+              );
+              continue;
+            }
+
+            const result = await this.imageProcessingService.uploadPresetFile(
+              presetFile,
+              user.userId,
+            );
+
+            uploadedPresets.push(result.url);
+          }
+
+          if (uploadedPresets.length > 0) {
+            updateProductDto.presetFiles = uploadedPresets;
+            console.log(`✅ ${uploadedPresets.length} preset files uploaded`);
+          }
+        } catch (error) {
+          console.error('❌ Preset files upload failed:', error);
+        }
+      }
+    }
+
     const product = await this.productsService.update(
       id,
       updateProductDto,
       user.userId,
     );
-    return { data: product };
+
+    return {
+      success: true,
+      message: 'Product updated successfully',
+      data: product,
+    };
   }
 
   @Delete('products/:id')
