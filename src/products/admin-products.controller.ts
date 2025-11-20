@@ -8,10 +8,7 @@ import { ProductsService } from './products.service';
 @Controller('admin/products')
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminProductsController {
-  constructor(
-    private readonly uploadService: UploadService,
-    private readonly productsService: ProductsService,
-  ) {}
+  constructor(private readonly productsService: ProductsService) {}
 
   @Post('/:id/action')
   async adminAction(
