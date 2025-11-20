@@ -44,7 +44,7 @@ export class Withdrawal {
   @Column({ type: 'text', nullable: true })
   adminResponse: string; // Response from admin (reason for rejection)
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'json', nullable: true })
   paymentProofImageUrl: string[]; // URL of the payment proof image uploaded by admin
 
   @Column({ type: 'timestamp', nullable: true })
