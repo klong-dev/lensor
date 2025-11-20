@@ -17,35 +17,47 @@ export class SavedPostsController {
   constructor(private readonly savedPostsService: SavedPostsService) {}
 
   @Post(':postId')
-  save(@CurrentUser('sub') userId: string, @Param('postId') postId: string) {
-    return this.savedPostsService.save(userId, postId);
+  save(
+    @CurrentUser() user: { userId: string },
+    @Param('postId') postId: string,
+  ) {
+    return this.savedPostsService.save(user.userId, postId);
   }
 
   @Delete(':postId')
-  unsave(@CurrentUser('sub') userId: string, @Param('postId') postId: string) {
-    return this.savedPostsService.unsave(userId, postId);
+  unsave(
+    @CurrentUser() user: { userId: string },
+    @Param('postId') postId: string,
+  ) {
+    return this.savedPostsService.unsave(user.userId, postId);
   }
 
   @Post(':postId/toggle')
-  toggle(@CurrentUser('sub') userId: string, @Param('postId') postId: string) {
-    return this.savedPostsService.toggle(userId, postId);
+  toggle(
+    @CurrentUser() user: { userId: string },
+    @Param('postId') postId: string,
+  ) {
+    return this.savedPostsService.toggle(user.userId, postId);
   }
 
   @Get()
   findByUser(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: { userId: string },
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
   ) {
     return this.savedPostsService.findByUser(
-      userId,
+      user.userId,
       limit ? +limit : 20,
       offset ? +offset : 0,
     );
   }
 
   @Get(':postId/is-saved')
-  isSaved(@CurrentUser('sub') userId: string, @Param('postId') postId: string) {
-    return this.savedPostsService.isSaved(userId, postId);
+  isSaved(
+    @CurrentUser() user: { userId: string },
+    @Param('postId') postId: string,
+  ) {
+    return this.savedPostsService.isSaved(user.userId, postId);
   }
 }
