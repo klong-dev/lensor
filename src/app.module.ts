@@ -35,7 +35,7 @@ import { AdminModule } from './admin/admin.module';
 import { VisionModule } from './vision/vision.module';
 import { BankCardsModule } from './bank-cards/bank-cards.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
-import { TicketModule } from './ticket/ticket.module';
+import { TicketsModule } from './ticket/tickets.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 
@@ -79,7 +79,7 @@ import jwtConfig from './config/jwt.config';
     VisionModule,
     BankCardsModule,
     WithdrawalsModule,
-    TicketModule,
+    TicketsModule,
   ],
   controllers: [AppController],
   providers: [
