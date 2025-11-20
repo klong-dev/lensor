@@ -7,6 +7,7 @@ import { ProductReview } from './entities/product-review.entity';
 import { SupabaseModule } from '../supabase/supabase.module';
 import { ImageProcessingService } from './image-processing.service';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { AdminProductsController } from './admin-products.controller';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     SupabaseModule,
     NotificationsModule,
   ],
-  controllers: [ProductsController],
+  controllers: [ProductsController, AdminProductsController],
   providers: [ProductsService, ImageProcessingService],
   exports: [ProductsService],
 })

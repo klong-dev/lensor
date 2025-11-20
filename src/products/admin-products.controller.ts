@@ -5,9 +5,9 @@ import { UploadService } from '../upload/upload.service';
 import { AdminActionDto } from './dto/admin-action.dto';
 import { ProductsService } from './products.service';
 
-@Controller('admin/withdrawals')
+@Controller('admin/products')
 @UseGuards(JwtAuthGuard, AdminGuard)
-export class AdminWithdrawalsController {
+export class AdminProductsController {
   constructor(
     private readonly uploadService: UploadService,
     private readonly productsService: ProductsService,
@@ -24,7 +24,7 @@ export class AdminWithdrawalsController {
     );
     return {
       data: withdrawal,
-      message: `Withdrawal ${adminActionDto.action} successfully`,
+      message: `Product ${adminActionDto.action} successfully`,
     };
   }
 }
