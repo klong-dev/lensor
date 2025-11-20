@@ -21,7 +21,7 @@ export class PaymentController {
 
   @Post('vnpay/create')
   async createVNPayPayment(
-    @Body() body: { amount: number; orderInfo?: string },
+    @Body() body: { amount: number; orderInfo?: string; isMobile?: boolean },
     @CurrentUser() user: { userId: string },
     @Req() req: Request,
   ) {
@@ -35,6 +35,7 @@ export class PaymentController {
       body.amount,
       body.orderInfo,
       ipAddr,
+      body.isMobile,
     );
     return { data: result };
   }
