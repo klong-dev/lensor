@@ -14,6 +14,18 @@ export class PostLikesService {
     private postLikeRepository: Repository<PostLike>,
   ) {}
 
+  async GetLikedPostsByUser(
+    userId: string,
+  ): Promise<{ message: string; data: PostLike[] }> {
+    const like = await this.postLikeRepository.find({
+      where: { userId },
+    });
+
+    return {
+      message: 'success',
+      data: like,
+    };
+  }
   /**
    * Like a post
    */

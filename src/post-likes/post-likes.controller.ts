@@ -21,6 +21,15 @@ export class PostLikesController {
    * POST /posts/:id/like
    * Like a post
    */
+  @Get('liked')
+  @Public()
+  async getLikedPosts(@CurrentUser() user: { userId: string }) {
+    const result = await this.postLikesService.GetLikedPostsByUser(user.userId);
+    return {
+      data: result,
+    };
+  }
+
   @Post(':id/like')
   async likePost(
     @Param('id', ParseUUIDPipe) postId: string,
