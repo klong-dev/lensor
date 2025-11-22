@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { ChatRoom } from './entities/chat-room.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { CreateRoomDto } from './dto/create-room.dto';
@@ -79,7 +79,7 @@ export class ChatService {
         const unreadCount = await this.messageRepository.count({
           where: {
             roomId: room.id,
-            userId: userId, // Not equal - messages from others
+            userId: Not(userId), // Not equal - messages from others
             isRead: false,
           },
         });
