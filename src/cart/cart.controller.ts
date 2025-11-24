@@ -28,11 +28,7 @@ export class CartController {
     @Body() body: { productId: string; quantity: number },
     @CurrentUser() user: { userId: string },
   ) {
-    const item = await this.cartService.addToCart(
-      user.userId,
-      body.productId,
-      body.quantity,
-    );
+    const item = await this.cartService.addToCart(user.userId, body.productId);
     return { data: item, message: 'Added to cart' };
   }
 

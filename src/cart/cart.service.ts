@@ -67,7 +67,7 @@ export class CartService {
     };
   }
 
-  async addToCart(userId: string, productId: string, quantity: number) {
+  async addToCart(userId: string, productId: string) {
     // Get product to get the price
     const product = await this.productsService.findOne(productId);
 
@@ -85,16 +85,12 @@ export class CartService {
     });
 
     if (cartItem) {
-      // Update quantity
-      cartItem.quantity += quantity;
-      return await this.cartItemRepository.save(cartItem);
+      throw new ForbiddenException('Product already in cart');
     }
-
     // Create new cart item with product price
     cartItem = this.cartItemRepository.create({
       userId,
       productId,
-      quantity,
       price: product.price,
     });
 
