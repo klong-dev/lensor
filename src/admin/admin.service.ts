@@ -146,14 +146,19 @@ export class AdminService {
       select: ['id', 'totalAmount', 'createdAt', 'items'],
     });
 
+    // Lấy discount-rate từ system variables
+    const discountRate =
+      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
+    const sellerRate = 1 - discountRate;
+
     if (withdrawnOrders.length === 0) {
       return {
         totalOrders: 0,
         totalOrderValue: 0,
-        platformRevenue: 0, // 17% của tổng
-        platformRevenuePercentage: 17,
-        sellerRevenue: 0, // 83% còn lại
-        sellerRevenuePercentage: 83,
+        platformRevenue: 0,
+        platformRevenuePercentage: Math.round(discountRate * 100),
+        sellerRevenue: 0,
+        sellerRevenuePercentage: Math.round(sellerRate * 100),
         formattedPlatformRevenue: '0 VNĐ',
         formattedSellerRevenue: '0 VNĐ',
         formattedTotalOrderValue: '0 VNĐ',
@@ -165,11 +170,6 @@ export class AdminService {
       (sum, order) => sum + Number(order.totalAmount),
       0,
     );
-
-    // Lấy discount-rate từ system variables
-    const discountRate =
-      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
-    const sellerRate = 1 - discountRate;
 
     // Tính doanh thu platform (discountRate)
     const platformRevenue = totalOrderValue * discountRate;
