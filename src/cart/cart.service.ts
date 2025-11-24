@@ -98,7 +98,7 @@ export class CartService {
     return await this.cartItemRepository.save(cartItem);
   }
 
-  async updateQuantity(userId: string, itemId: StringifyOptions) {
+  async updateQuantity(userId: string, itemId: string) {
     const item = await this.cartItemRepository.findOne({
       where: { id: itemId, userId },
     });
