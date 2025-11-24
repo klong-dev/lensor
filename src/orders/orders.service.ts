@@ -140,16 +140,31 @@ export class OrdersService {
     await this.orderRepository.update({ id: In(orderIds) }, { status });
   }
 
-  async checkoutCart(userId: string) {
-    // Get cart items
+  async checkoutCart(userId: string, checkoutDto?: { productIds?: string[] }) {
+    // If productIds provided, only checkout those products
     const cartItems = await this.cartService.getCartItems(userId);
-
     if (!cartItems || cartItems.length === 0) {
       throw new BadRequestException('Cart is empty');
     }
 
-    // Check all items in cart are not blocked or deleted
-    for (const item of cartItems) {
+    let checkedOutItems;
+    if (checkoutDto?.productIds && checkoutDto.productIds.length > 0) {
+      // Only checkout products in productIds
+      checkedOutItems = cartItems.filter((item) =>
+        checkoutDto.productIds.includes(item.productId),
+      );
+      if (checkedOutItems.length === 0) {
+        throw new BadRequestException(
+          'No valid products found in cart for checkout',
+        );
+      }
+    } else {
+      // Checkout all products in cart
+      checkedOutItems = cartItems;
+    }
+
+    // Validate products
+    for (const item of checkedOutItems) {
       const product = await this.productsService.findOne(item.productId);
       if (!product || product.status === 'blocked') {
         throw new ForbiddenException(
@@ -159,14 +174,13 @@ export class OrdersService {
     }
 
     // Calculate total amount
-    const totalAmount = cartItems.reduce(
+    const totalAmount = checkedOutItems.reduce(
       (sum, item) => sum + Number(item.price) * item.quantity,
       0,
     );
 
     // Check wallet balance
     const balance = await this.walletService.getBalance(userId);
-
     if (balance < totalAmount) {
       throw new BadRequestException(
         `Insufficient balance. Required: ${totalAmount}, Available: ${balance}`,
@@ -175,11 +189,9 @@ export class OrdersService {
 
     // Prepare order items with seller info
     const orderItems = await Promise.all(
-      cartItems.map(async (item) => {
-        // Get full product to find seller
-        const fullProduct = await this.productsService.findOneWithDownloadLinks(
-          item.productId,
-        );
+      checkedOutItems.map(async (item) => {
+        // Get full product to find seller (not used, but can be used for future logic)
+        await this.productsService.findOneWithDownloadLinks(item.productId);
         return {
           productId: item.productId,
           productTitle: item.product?.title || 'Unknown Product',
@@ -221,8 +233,16 @@ export class OrdersService {
       transactionId: `WALLET-${Date.now()}`,
     });
 
-    // Clear cart
-    await this.cartService.clearCart(userId);
+    // Remove checked out products from cart
+    if (checkoutDto?.productIds && checkoutDto.productIds.length > 0) {
+      // Remove only checked out items
+      for (const item of checkedOutItems) {
+        await this.cartService.removeItem(userId, item.id);
+      }
+    } else {
+      // Clear entire cart
+      await this.cartService.clearCart(userId);
+    }
 
     // Return order with updated status
     return await this.orderRepository.findOne({
