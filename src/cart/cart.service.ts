@@ -8,7 +8,6 @@ import { Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
 import { ProductsService } from '../products/products.service';
 import { SupabaseService } from '../supabase/supabase.service';
-import { StringifyOptions } from 'node:querystring';
 
 @Injectable()
 export class CartService {
