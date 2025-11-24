@@ -12,6 +12,7 @@ import { Admin } from './entities/admin.entity';
 import { Order } from '../orders/entities/order.entity';
 import { AdminLoginDto } from './dto/admin-login.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { SystemVariablesService } from '../system-variables/system-variables.service';
 
 @Injectable()
 export class AdminService {
@@ -21,6 +22,7 @@ export class AdminService {
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
     private jwtService: JwtService,
+    private systemVariablesService: SystemVariablesService,
   ) {}
 
   async createAdmin(createAdminDto: CreateAdminDto) {
@@ -164,11 +166,16 @@ export class AdminService {
       0,
     );
 
-    // Tính doanh thu platform (17%)
-    const platformRevenue = totalOrderValue * 0.17;
+    // Lấy discount-rate từ system variables
+    const discountRate =
+      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
+    const sellerRate = 1 - discountRate;
 
-    // Tính phần seller nhận được (83%)
-    const sellerRevenue = totalOrderValue * 0.83;
+    // Tính doanh thu platform (discountRate)
+    const platformRevenue = totalOrderValue * discountRate;
+
+    // Tính phần seller nhận được (1 - discountRate)
+    const sellerRevenue = totalOrderValue * sellerRate;
 
     // Format số tiền theo VND
     const formatVND = (amount: number) => {
@@ -182,18 +189,18 @@ export class AdminService {
     return {
       totalOrders: withdrawnOrders.length,
       totalOrderValue: Math.round(totalOrderValue),
-      platformRevenue: Math.round(platformRevenue), // 17%
-      platformRevenuePercentage: 17,
-      sellerRevenue: Math.round(sellerRevenue), // 83%
-      sellerRevenuePercentage: 83,
+      platformRevenue: Math.round(platformRevenue),
+      platformRevenuePercentage: Math.round(discountRate * 100),
+      sellerRevenue: Math.round(sellerRevenue),
+      sellerRevenuePercentage: Math.round(sellerRate * 100),
       formattedPlatformRevenue: formatVND(platformRevenue),
       formattedSellerRevenue: formatVND(sellerRevenue),
       formattedTotalOrderValue: formatVND(totalOrderValue),
       orders: withdrawnOrders.map((order) => ({
         id: order.id,
         totalAmount: Number(order.totalAmount),
-        platformFee: Math.round(Number(order.totalAmount) * 0.17),
-        sellerReceived: Math.round(Number(order.totalAmount) * 0.83),
+        platformFee: Math.round(Number(order.totalAmount) * discountRate),
+        sellerReceived: Math.round(Number(order.totalAmount) * sellerRate),
         createdAt: order.createdAt,
         itemCount: order.items?.length || 0,
       })),

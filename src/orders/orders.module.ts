@@ -8,6 +8,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { CartModule } from '../cart/cart.module';
 import { ProductsModule } from '../products/products.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SystemVariablesModule } from '../system-variables/system-variables.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     CartModule,
     ProductsModule,
     NotificationsModule,
+    SystemVariablesModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrderSchedulerService],

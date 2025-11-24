@@ -6,10 +6,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { SystemVariablesService } from '../system-variables/system-variables.service';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly systemVariablesService: SystemVariablesService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -46,5 +50,22 @@ export class AdminController {
   async getRevenueStatistics() {
     const statistics = await this.adminService.getRevenueStatistics();
     return { data: statistics };
+  }
+
+  @Post('discount-rate')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async setDiscountRate(@Body() body: { value: number }) {
+    const updated = await this.systemVariablesService.setVariable(
+      'discountRate',
+      body.value,
+    );
+    return { discountRate: updated.value };
+  }
+
+  @Get('discount-rate')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  async getDiscountRate() {
+    const value = await this.systemVariablesService.getVariable('discountRate');
+    return { discountRate: value };
   }
 }

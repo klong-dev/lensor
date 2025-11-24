@@ -6,6 +6,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { Admin } from './entities/admin.entity';
 import { Order } from '../orders/entities/order.entity';
+import { SystemVariablesModule } from '../system-variables/system-variables.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Order } from '../orders/entities/order.entity';
         },
       }),
     }),
+    SystemVariablesModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

@@ -13,6 +13,7 @@ import { BankCardsService } from '../bank-cards/bank-cards.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentHistoryService } from '../payment-history/payment-history.service';
+import { SystemVariablesService } from '../system-variables/system-variables.service';
 
 @Injectable()
 export class WithdrawalsService {
@@ -24,6 +25,7 @@ export class WithdrawalsService {
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private paymentHistoryService: PaymentHistoryService,
+    private systemVariablesService: SystemVariablesService,
   ) {}
 
   async createWithdrawal(
@@ -94,8 +96,9 @@ export class WithdrawalsService {
       );
     }
 
-    // Calculate fee (17%) and actual amount
-    const feeRate = 0.17; // 17%
+    // Calculate fee (use system variable)
+    const feeRate =
+      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
     const fee = totalAmount * feeRate;
     const actualAmount = totalAmount - fee;
 
@@ -192,6 +195,8 @@ export class WithdrawalsService {
 
     if (action === 'approved') {
       // Create payment history for the successful withdrawal
+      const feeRate =
+        (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
       await this.paymentHistoryService.createHistory({
         userId: updatedWithdrawal.userId,
         orderId: null,
@@ -207,7 +212,7 @@ export class WithdrawalsService {
           bankInfo: updatedWithdrawal.bankInfo,
           totalAmount: updatedWithdrawal.amount,
           fee: updatedWithdrawal.fee,
-          feeRate: '17%',
+          feeRate: `${feeRate * 100}%`,
           actualAmount: updatedWithdrawal.actualAmount,
           paymentProofImageUrl: updatedWithdrawal.paymentProofImageUrl,
         },
@@ -228,15 +233,15 @@ export class WithdrawalsService {
         'Yêu cầu rút tiền đã được chấp nhận',
         `Yêu cầu rút tiền đã được chấp nhận:\n• Tổng tiền đơn hàng: ${Number(
           updatedWithdrawal.amount,
-        ).toLocaleString('vi-VN')} VNĐ\n• Phí hệ thống (17%): ${Number(
+        ).toLocaleString(
+          'vi-VN',
+        )} VNĐ\n• Phí hệ thống (${feeRate * 100}%): ${Number(
           updatedWithdrawal.fee,
         ).toLocaleString('vi-VN')} VNĐ\n• Số tiền thực nhận: ${Number(
           updatedWithdrawal.actualAmount,
         ).toLocaleString('vi-VN')} VNĐ\n\nTiền sẽ được chuyển về tài khoản ${
           updatedWithdrawal.bankInfo.bankName
-        } - ${updatedWithdrawal.bankInfo.accountNumber} (${
-          updatedWithdrawal.bankInfo.accountHolder
-        }) trong vòng 1-3 ngày làm việc.${
+        } - ${updatedWithdrawal.bankInfo.accountNumber} (${updatedWithdrawal.bankInfo.accountHolder}) trong vòng 1-3 ngày làm việc.${
           adminResponse ? `\n\nGhi chú từ admin: ${adminResponse}` : ''
         }`,
         {

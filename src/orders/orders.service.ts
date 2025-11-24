@@ -9,6 +9,7 @@ import { Order } from './entities/order.entity';
 import { WalletService } from '../wallet/wallet.service';
 import { CartService } from '../cart/cart.service';
 import { ProductsService } from '../products/products.service';
+import { SystemVariablesService } from '../system-variables/system-variables.service';
 
 @Injectable()
 export class OrdersService {
@@ -18,6 +19,7 @@ export class OrdersService {
     private walletService: WalletService,
     private cartService: CartService,
     private productsService: ProductsService,
+    private systemVariablesService: SystemVariablesService,
   ) {}
 
   async createOrder(
