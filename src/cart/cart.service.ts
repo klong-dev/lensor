@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { CartItem } from './entities/cart-item.entity';
 import { ProductsService } from '../products/products.service';
 import { SupabaseService } from '../supabase/supabase.service';
+import { StringifyOptions } from 'node:querystring';
 
 @Injectable()
 export class CartService {
@@ -97,7 +98,7 @@ export class CartService {
     return await this.cartItemRepository.save(cartItem);
   }
 
-  async updateQuantity(userId: string, itemId: string, quantity: number) {
+  async updateQuantity(userId: string, itemId: StringifyOptions) {
     const item = await this.cartItemRepository.findOne({
       where: { id: itemId, userId },
     });
@@ -111,8 +112,6 @@ export class CartService {
         `Product ${item.product.title} is not available for purchase`,
       );
     }
-
-    item.quantity = quantity;
     return await this.cartItemRepository.save(item);
   }
 

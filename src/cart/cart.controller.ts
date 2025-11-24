@@ -38,11 +38,7 @@ export class CartController {
     @Body() body: { quantity: number },
     @CurrentUser() user: { userId: string },
   ) {
-    const item = await this.cartService.updateQuantity(
-      user.userId,
-      itemId,
-      body.quantity,
-    );
+    const item = await this.cartService.updateQuantity(user.userId, itemId);
     return { data: item, message: 'Cart updated' };
   }
 
