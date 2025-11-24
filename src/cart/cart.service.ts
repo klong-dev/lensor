@@ -67,7 +67,7 @@ export class CartService {
     };
   }
 
-  async addToCart(userId: string, productId: string, quantity: number) {
+  async addToCart(userId: string, productId: string) {
     // Get product to get the price
     const product = await this.productsService.findOne(productId);
 
@@ -85,23 +85,19 @@ export class CartService {
     });
 
     if (cartItem) {
-      // Update quantity
-      cartItem.quantity += quantity;
-      return await this.cartItemRepository.save(cartItem);
+      throw new ForbiddenException('Product already in cart');
     }
-
     // Create new cart item with product price
     cartItem = this.cartItemRepository.create({
       userId,
       productId,
-      quantity,
       price: product.price,
     });
 
     return await this.cartItemRepository.save(cartItem);
   }
 
-  async updateQuantity(userId: string, itemId: string, quantity: number) {
+  async updateQuantity(userId: string, itemId: string) {
     const item = await this.cartItemRepository.findOne({
       where: { id: itemId, userId },
     });
@@ -115,8 +111,6 @@ export class CartService {
         `Product ${item.product.title} is not available for purchase`,
       );
     }
-
-    item.quantity = quantity;
     return await this.cartItemRepository.save(item);
   }
 
