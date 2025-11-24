@@ -10,6 +10,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentHistoryModule } from '../payment-history/payment-history.module';
 import { UploadModule } from '../upload/upload.module';
+import { SystemVariablesModule } from '../system-variables/system-variables.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UploadModule } from '../upload/upload.module';
     NotificationsModule,
     PaymentHistoryModule,
     UploadModule,
+    SystemVariablesModule,
   ],
   providers: [WithdrawalsService],
   controllers: [WithdrawalsController, AdminWithdrawalsController],
