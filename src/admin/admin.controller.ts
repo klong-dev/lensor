@@ -61,11 +61,4 @@ export class AdminController {
     );
     return { discountRate: updated.value };
   }
-
-  @Get('discount-rate')
-  @UseGuards(JwtAuthGuard, AdminGuard)
-  async getDiscountRate() {
-    const value = await this.systemVariablesService.getVariable('discountRate');
-    return { discountRate: value };
-  }
 }

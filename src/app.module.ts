@@ -38,6 +38,7 @@ import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { TicketsModule } from './ticket/tickets.module';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+import { SystemVariablesModule } from './system-variables/system-variables.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import jwtConfig from './config/jwt.config';
     BankCardsModule,
     WithdrawalsModule,
     TicketsModule,
+    SystemVariablesModule,
   ],
   controllers: [AppController],
   providers: [
