@@ -1,5 +1,6 @@
 import { Controller, Get, Put, Body } from '@nestjs/common';
 import { SystemVariablesService } from './system-variables.service';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('system-variables')
 export class SystemVariablesController {
@@ -7,6 +8,7 @@ export class SystemVariablesController {
     private readonly systemVariablesService: SystemVariablesService,
   ) {}
 
+  @Public()
   @Get('discount-rate')
   async getDiscountRate() {
     const value = await this.systemVariablesService.getVariable('discountRate');
