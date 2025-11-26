@@ -25,6 +25,10 @@ export class PaymentHistoryService {
     private paymentHistoryRepository: Repository<PaymentHistory>,
   ) {}
 
+  async findById(id: string): Promise<PaymentHistory | null> {
+    return await this.paymentHistoryRepository.findOne({ where: { id } });
+  }
+
   /**
    * Create payment history record
    */
