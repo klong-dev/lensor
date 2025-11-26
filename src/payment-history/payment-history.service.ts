@@ -25,7 +25,7 @@ export class PaymentHistoryService {
     private paymentHistoryRepository: Repository<PaymentHistory>,
   ) {}
 
-  async findById(id: string): Promise<PaymentHistory | null> {
+  async findById(id: number): Promise<PaymentHistory | null> {
     return await this.paymentHistoryRepository.findOne({ where: { id } });
   }
 
@@ -77,7 +77,7 @@ export class PaymentHistoryService {
    * Update payment history status
    */
   async updateStatus(
-    id: string,
+    id: number,
     status: 'pending' | 'completed' | 'failed' | 'cancelled',
     transactionId?: string,
     metadata?: any,
