@@ -9,10 +9,11 @@ import { PostLikesModule } from '../post-likes/post-likes.module';
 import { PostCommentsModule } from '../post-comments/post-comments.module';
 import { VisionModule } from '../vision/vision.module';
 import { ImageProcessingService } from '../products/image-processing.service';
+import { PostLike } from 'src/post-likes/entities/post-like.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post]),
+    TypeOrmModule.forFeature([Post, PostLike]),
     SupabaseModule,
     UserFollowsModule,
     PostLikesModule,

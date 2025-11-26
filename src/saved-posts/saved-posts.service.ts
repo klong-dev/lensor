@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SavedPost } from './entities/saved-post.entity';
+import { PostsService } from 'src/posts/posts.service';
 
 @Injectable()
 export class SavedPostsService {
   constructor(
     @InjectRepository(SavedPost)
     private savedPostRepository: Repository<SavedPost>,
+    private postsService: PostsService,
   ) {}
 
   async save(userId: string, postId: string): Promise<SavedPost> {
@@ -38,7 +40,7 @@ export class SavedPostsService {
     userId: string,
     limit: number = 20,
     offset: number = 0,
-  ): Promise<{ savedPosts: SavedPost[]; total: number }> {
+  ): Promise<{ post: any; total: number }> {
     const [savedPosts, total] = await this.savedPostRepository.findAndCount({
       where: { userId },
       relations: ['post'],
@@ -47,7 +49,14 @@ export class SavedPostsService {
       skip: offset,
     });
 
-    return { savedPosts, total };
+    const posts = [];
+    for (const savedPost of savedPosts) {
+      const post = await this.postsService.findOne(savedPost.postId, userId);
+      if (post) {
+        posts.push(post);
+      }
+    }
+    return { post: posts, total };
   }
 
   async toggle(userId: string, postId: string): Promise<{ saved: boolean }> {
