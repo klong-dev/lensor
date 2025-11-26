@@ -477,6 +477,31 @@ export class ProductsService {
 
     const user = await this.supabaseService.getUserById(userId);
 
+    let isUserBought = false;
+    if (userId) {
+      const userOrders = await this.orderRepository.find({
+        where: { userId: userId },
+      });
+
+      for (const order of userOrders) {
+        const items = order.items || [];
+        if (
+          items &&
+          items.length > 0 &&
+          items.find((item) => item.productId === productId)
+        ) {
+          isUserBought = true;
+          break;
+        }
+      }
+    }
+
+    if (!isUserBought) {
+      throw new BadRequestException(
+        'You can only review products you have purchased',
+      );
+    }
+
     const review = this.reviewRepository.create({
       productId,
       userId,
