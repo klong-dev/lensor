@@ -12,6 +12,7 @@ import { OrdersService } from '../orders/orders.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentHistoryService } from '../payment-history/payment-history.service';
+import { ProductsService } from '../products/products.service';
 
 @Injectable()
 export class ReportsService {
@@ -22,6 +23,7 @@ export class ReportsService {
     private walletService: WalletService,
     private notificationsService: NotificationsService,
     private paymentHistoryService: PaymentHistoryService,
+    private productsService: ProductsService,
   ) {}
 
   async createReport(userId: string, createReportDto: CreateReportDto) {
@@ -170,6 +172,7 @@ export class ReportsService {
 
     // Get order
     const order = await this.ordersService.getOrderById(report.orderId);
+    const product = await this.productsService.getProductById(report.productId);
 
     if (action === 'approved') {
       // Get wallet balance before refund
@@ -178,8 +181,8 @@ export class ReportsService {
       // Refund buyer
       await this.walletService.addBalance(
         report.buyerId,
-        Number(order.totalAmount),
-        `Refund for order #${report.orderId} - Report approved`,
+        Number(product.price),
+        `Refund for product #${report.productId} - Report approved`,
       );
 
       // Get wallet balance after refund
@@ -191,10 +194,10 @@ export class ReportsService {
         orderId: report.orderId,
         paymentMethod: 'refund',
         transactionType: 'refund',
-        amount: Number(order.totalAmount),
+        amount: Number(product.price),
         status: 'completed',
         transactionId: reportId,
-        description: `Refund cho đơn hàng #${report.orderId}`,
+        description: `Refund cho sản phẩm #${report.productId}`,
         metadata: {
           reportId,
           reason: report.reason,
@@ -216,8 +219,8 @@ export class ReportsService {
         report.buyerId,
         'report_approved',
         'Yêu cầu hoàn tiền đã được chấp nhận',
-        `Yêu cầu hoàn tiền của bạn đã được chấp nhận. Số tiền ${Number(order.totalAmount).toLocaleString('vi-VN')} VNĐ đã được hoàn vào ví của bạn.${adminResponse ? ` Phản hồi từ admin: ${adminResponse}` : ''}`,
-        { reportId, orderId: report.orderId, amount: order.totalAmount },
+        `Yêu cầu hoàn tiền của bạn đã được chấp nhận. Số tiền ${Number(product.price).toLocaleString('vi-VN')} VNĐ đã được hoàn vào ví của bạn.${adminResponse ? ` Phản hồi từ admin: ${adminResponse}` : ''}`,
+        { reportId, orderId: report.orderId, amount: product.price },
         `/orders/${report.orderId}`,
       );
 
