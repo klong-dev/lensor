@@ -173,6 +173,22 @@ export class OrdersService {
           `Product ${item.product.title} is not available for purchase`,
         );
       }
+      const userOrders = await this.orderRepository.find({
+        where: { userId: userId },
+      });
+
+      for (const order of userOrders) {
+        const items = order.items || [];
+        if (
+          items &&
+          items.length > 0 &&
+          items.find((item) => item.productId === product.id)
+        ) {
+          throw new ForbiddenException(
+            `You have already purchased the product: ${product.name}`,
+          );
+        }
+      }
     }
 
     // Calculate total amount
