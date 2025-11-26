@@ -20,12 +20,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { ImageProcessingService } from '../products/image-processing.service';
 import { multerConfig } from '../config/multer.config';
+import { PostLikesService } from 'src/post-likes/post-likes.service';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
 export class PostsController {
   constructor(
     private readonly postsService: PostsService,
+    private readonly postLikesService: PostLikesService,
     private readonly imageProcessingService: ImageProcessingService,
   ) {}
 
@@ -80,6 +82,14 @@ export class PostsController {
 
     const post = await this.postsService.create(createPostDto, user.userId);
     return { data: post };
+  }
+
+  @Get('liked')
+  async getLikedPosts(@CurrentUser() user: { userId: string }) {
+    const result = await this.postLikesService.GetLikedPostsByUser(user.userId);
+    return {
+      data: result,
+    };
   }
 
   @Get()
