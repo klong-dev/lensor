@@ -133,6 +133,12 @@ export class ProductsService {
     );
   }
 
+  async getProductById(id: string) {
+    return this.productRepository.findOne({
+      where: { id, deletedAt: IsNull() },
+    });
+  }
+
   async findOne(id: string, userId?: string) {
     const product = await this.productRepository.findOne({
       where: { id, deletedAt: IsNull() },
