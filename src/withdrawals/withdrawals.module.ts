@@ -11,6 +11,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentHistoryModule } from '../payment-history/payment-history.module';
 import { UploadModule } from '../upload/upload.module';
 import { SystemVariablesModule } from '../system-variables/system-variables.module';
+import { ProductsModule } from 'src/products/products.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SystemVariablesModule } from '../system-variables/system-variables.modu
     PaymentHistoryModule,
     UploadModule,
     SystemVariablesModule,
+    ProductsModule,
   ],
   providers: [WithdrawalsService],
   controllers: [WithdrawalsController, AdminWithdrawalsController],

@@ -14,6 +14,8 @@ import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentHistoryService } from '../payment-history/payment-history.service';
 import { SystemVariablesService } from '../system-variables/system-variables.service';
+import { ProductsService } from '../products/products.service';
+import { CheckWithdrawalDto } from './dto/check-withdrawal.dto';
 
 @Injectable()
 export class WithdrawalsService {
@@ -26,6 +28,7 @@ export class WithdrawalsService {
     private notificationsService: NotificationsService,
     private paymentHistoryService: PaymentHistoryService,
     private systemVariablesService: SystemVariablesService,
+    private productsService: ProductsService,
   ) {}
 
   async createWithdrawal(
@@ -125,6 +128,42 @@ export class WithdrawalsService {
     await this.ordersService.updateOrdersStatus(orderIds, 'withdrawing');
 
     return savedWithdrawal;
+  }
+
+  async checkWithdrawal(
+    userId: string,
+    checkWithdrawalDto: CheckWithdrawalDto,
+  ) {
+    const { orderIds } = checkWithdrawalDto;
+    const orders = await Promise.all(
+      orderIds.map((orderId) => this.ordersService.getOrderById(orderId)),
+    );
+    let totalAmount = 0;
+    let discountAmount = 0;
+    for (const order of orders) {
+      const products = Array.isArray(order.items) ? order.items : [];
+      const productArray = [];
+      for (const product of products) {
+        const prod = await this.productsService.findOne(product.productId);
+        totalAmount += prod.price;
+        productArray.push(prod);
+      }
+      await Promise.all(productArray);
+      order.items = productArray;
+    }
+    discountAmount =
+      totalAmount *
+      ((await this.systemVariablesService.getVariable('discountRate')) / 100);
+    return {
+      success: true,
+      message: 'Check completed',
+      data: {
+        totalAmount,
+        discountAmount,
+        payableAmount: totalAmount - discountAmount,
+        orders,
+      },
+    };
   }
 
   async getMyWithdrawals(userId: string) {

@@ -182,8 +182,11 @@ export class ProductsController {
 
   @Get('products/:id')
   @Public()
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    const product = await this.productsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user?: { userId: string },
+  ) {
+    const product = await this.productsService.findOne(id, user?.userId);
     return { data: product };
   }
 

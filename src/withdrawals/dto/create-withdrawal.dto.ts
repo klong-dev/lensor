@@ -4,8 +4,6 @@ import {
   IsArray,
   IsOptional,
   IsString,
-  IsNumber,
-  Min,
 } from 'class-validator';
 
 export class CreateWithdrawalDto {

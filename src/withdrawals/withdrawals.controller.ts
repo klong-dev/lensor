@@ -11,6 +11,7 @@ import { WithdrawalsService } from './withdrawals.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CheckWithdrawalDto } from './dto/check-withdrawal.dto';
 
 @Controller('withdrawals')
 @UseGuards(JwtAuthGuard)
@@ -25,6 +26,22 @@ export class WithdrawalsController {
     const withdrawal = await this.withdrawalsService.createWithdrawal(
       user.userId,
       createWithdrawalDto,
+    );
+    return {
+      data: withdrawal,
+      message:
+        'Withdrawal request submitted successfully. Admin will process it soon.',
+    };
+  }
+
+  @Get('check')
+  async checkWithdrawal(
+    @Body() checkWithdrawalDto: CheckWithdrawalDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const withdrawal = await this.withdrawalsService.checkWithdrawal(
+      user.userId,
+      checkWithdrawalDto,
     );
     return {
       data: withdrawal,

@@ -12,6 +12,7 @@ import { Product } from './entities/product.entity';
 import { ProductReview } from './entities/product-review.entity';
 import { SupabaseService } from '../supabase/supabase.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { Order } from 'src/orders/entities/order.entity';
 
 @Injectable()
 export class ProductsService {
@@ -22,6 +23,8 @@ export class ProductsService {
     private reviewRepository: Repository<ProductReview>,
     private supabaseService: SupabaseService,
     private notificationsService: NotificationsService,
+    @InjectRepository(Order)
+    private orderRepository: Repository<Order>,
   ) {}
 
   async create(createProductDto: CreateProductDto, userId: string) {
@@ -130,7 +133,7 @@ export class ProductsService {
     );
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const product = await this.productRepository.findOne({
       where: { id, deletedAt: IsNull() },
       relations: ['reviews'],
@@ -186,6 +189,25 @@ export class ProductsService {
         helpful: review.helpful,
       }));
 
+    let isUserBought = false;
+    if (userId) {
+      const userOrders = await this.orderRepository.find({
+        where: { userId: userId },
+      });
+
+      for (const order of userOrders) {
+        const items = order.items || [];
+        if (
+          items &&
+          items.length > 0 &&
+          items.find((item) => item.productId === id)
+        ) {
+          isUserBought = true;
+          break;
+        }
+      }
+    }
+
     return {
       id: product.id,
       name: product.title,
@@ -224,7 +246,8 @@ export class ProductsService {
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
       warranty,
-      reviews,
+      isUserBought,
+      reviews: isUserBought ? reviews : [],
     };
   }
 
@@ -453,6 +476,31 @@ export class ProductsService {
     }
 
     const user = await this.supabaseService.getUserById(userId);
+
+    let isUserBought = false;
+    if (userId) {
+      const userOrders = await this.orderRepository.find({
+        where: { userId: userId },
+      });
+
+      for (const order of userOrders) {
+        const items = order.items || [];
+        if (
+          items &&
+          items.length > 0 &&
+          items.find((item) => item.productId === productId)
+        ) {
+          isUserBought = true;
+          break;
+        }
+      }
+    }
+
+    if (!isUserBought) {
+      throw new BadRequestException(
+        'You can only review products you have purchased',
+      );
+    }
 
     const review = this.reviewRepository.create({
       productId,

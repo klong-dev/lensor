@@ -6,24 +6,35 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostLike } from './entities/post-like.entity';
+import { PostsService } from 'src/posts/posts.service';
+import { Post } from 'src/posts/entities/post.entity';
 
 @Injectable()
 export class PostLikesService {
   constructor(
     @InjectRepository(PostLike)
     private postLikeRepository: Repository<PostLike>,
+    @InjectRepository(Post)
+    private postRepository: Repository<Post>,
   ) {}
 
   async GetLikedPostsByUser(
     userId: string,
-  ): Promise<{ message: string; data: PostLike[] }> {
-    const like = await this.postLikeRepository.find({
+  ): Promise<{ message: string; data: Post[] }> {
+    const likes = await this.postLikeRepository.find({
       where: { userId },
     });
 
+    const posts = [];
+    for (const like of likes) {
+      posts.push(
+        await this.postRepository.findOne({ where: { id: like.postId } }),
+      );
+    }
+
     return {
       message: 'success',
-      data: like,
+      data: posts,
     };
   }
   /**
