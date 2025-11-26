@@ -9,6 +9,7 @@ import { WalletModule } from '../wallet/wallet.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UploadModule } from '../upload/upload.module';
 import { PaymentHistoryModule } from '../payment-history/payment-history.module';
+import { ProductsModule } from 'src/products/products.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PaymentHistoryModule } from '../payment-history/payment-history.module'
     NotificationsModule,
     UploadModule,
     PaymentHistoryModule,
+    ProductsModule,
   ],
   controllers: [ReportsController, AdminReportsController],
   providers: [ReportsService],
