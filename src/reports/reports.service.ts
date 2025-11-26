@@ -207,7 +207,7 @@ export class ReportsService {
       // Update order status
       await this.ordersService.updateOrderStatus(
         report.orderId,
-        'refunded',
+        'completed',
         null,
       );
 
@@ -225,8 +225,8 @@ export class ReportsService {
       await this.notificationsService.createNotification(
         report.sellerId,
         'order_refunded',
-        'Đơn hàng đã bị hoàn tiền',
-        `Đơn hàng #${report.orderId} đã bị hoàn tiền với lý do: "${report.reason}". Số tiền ${Number(order.totalAmount).toLocaleString('vi-VN')} VNĐ đã được hoàn lại cho người mua.${adminResponse ? ` Admin: ${adminResponse}` : ''}`,
+        'Đơn hàng đã được hoàn tiền',
+        `Đơn hàng #${report.orderId} đã được hoàn tiền với lý do: "${report.reason}". Số tiền ${Number(order.totalAmount).toLocaleString('vi-VN')} VNĐ đã được hoàn lại cho người mua.${adminResponse ? ` Admin: ${adminResponse}` : ''}`,
         {
           reportId,
           orderId: report.orderId,
