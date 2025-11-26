@@ -8,10 +8,11 @@ import { SupabaseModule } from '../supabase/supabase.module';
 import { ImageProcessingService } from './image-processing.service';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { AdminProductsController } from './admin-products.controller';
+import { Order } from 'src/orders/entities/order.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, ProductReview]),
+    TypeOrmModule.forFeature([Product, ProductReview, Order]),
     SupabaseModule,
     NotificationsModule,
   ],
