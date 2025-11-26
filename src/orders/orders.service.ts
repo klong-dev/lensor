@@ -185,7 +185,7 @@ export class OrdersService {
           items.find((item) => item.productId === product.id)
         ) {
           throw new ForbiddenException(
-            `You have already purchased the product: ${product.name}`,
+            `You have already purchased the product: ${product.id}`,
           );
         }
       }
