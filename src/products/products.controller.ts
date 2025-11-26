@@ -149,8 +149,7 @@ export class ProductsController {
         }
       } catch (error) {
         console.error('❌ Preset files upload failed:', error);
-        // Don't throw error - preset files are optional
-        // throw error;
+        throw error;
       }
     }
 
