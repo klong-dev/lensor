@@ -148,7 +148,7 @@ export class AdminService {
 
     // Lấy discount-rate từ system variables
     const discountRate =
-      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
+      (await this.systemVariablesService.getVariable('discountRate')) / 100;
     const sellerRate = 1 - discountRate;
 
     if (withdrawnOrders.length === 0) {

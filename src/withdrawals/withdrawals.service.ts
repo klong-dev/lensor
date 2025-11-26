@@ -235,7 +235,7 @@ export class WithdrawalsService {
     if (action === 'approved') {
       // Create payment history for the successful withdrawal
       const feeRate =
-        (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
+        (await this.systemVariablesService.getVariable('discountRate')) / 100;
       await this.paymentHistoryService.createHistory({
         userId: updatedWithdrawal.userId,
         orderId: null,
