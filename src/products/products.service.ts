@@ -65,7 +65,7 @@ export class ProductsService {
     };
   }
 
-  async findAll(userId?: string) {
+  async findAll() {
     const products = await this.productRepository.find({
       where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
