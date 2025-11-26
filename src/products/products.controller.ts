@@ -338,6 +338,20 @@ export class ProductsController {
     return { data: review };
   }
 
+  @Delete('products/:productId/reviews/:reviewId')
+  async deleteReview(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const review = await this.productsService.deleteReview(
+      productId,
+      reviewId,
+      user.userId,
+    );
+    return { data: review };
+  }
+
   @Post('products/upload-image')
   @UseInterceptors(FileInterceptor('file', multerConfig))
   async uploadProductImage(
