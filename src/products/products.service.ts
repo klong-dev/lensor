@@ -247,7 +247,7 @@ export class ProductsService {
       updatedAt: product.updatedAt.toISOString(),
       warranty,
       isUserBought,
-      reviews: isUserBought ? reviews : [],
+      reviews,
     };
   }
 
@@ -476,6 +476,14 @@ export class ProductsService {
     }
 
     const user = await this.supabaseService.getUserById(userId);
+
+    const isReviewExist = await this.reviewRepository.findOne({
+      where: { productId, userId, deletedAt: IsNull() },
+    });
+
+    if (isReviewExist) {
+      throw new BadRequestException('You have already reviewed this product');
+    }
 
     let isUserBought = false;
     if (userId) {
