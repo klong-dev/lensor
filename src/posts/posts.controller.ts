@@ -86,7 +86,7 @@ export class PostsController {
 
   @Get('liked')
   async getLikedPosts(@CurrentUser() user: { userId: string }) {
-    const result = await this.postLikesService.GetLikedPostsByUser(user.userId);
+    const result = await this.postsService.GetLikedPostsByUser(user.userId);
     return {
       data: result,
     };

@@ -10,6 +10,7 @@ import { PostLikesService } from '../post-likes/post-likes.service';
 import { PostCommentsService } from '../post-comments/post-comments.service';
 import { VisionService } from '../vision/vision.service';
 import { ConfigService } from '@nestjs/config';
+import { PostLike } from 'src/post-likes/entities/post-like.entity';
 
 @Injectable()
 export class PostsService {
@@ -24,6 +25,8 @@ export class PostsService {
     private postCommentsService: PostCommentsService,
     private visionService: VisionService,
     private configService: ConfigService,
+    @InjectRepository(PostLike)
+    private postLikeRepository: Repository<PostLike>,
   ) {}
 
   async create(createPostDto: CreatePostDto, userId: string): Promise<Post> {
@@ -259,5 +262,23 @@ export class PostsService {
     } else {
       return 'Just now';
     }
+  }
+
+  async GetLikedPostsByUser(
+    userId: string,
+  ): Promise<{ message: string; data: Post[] }> {
+    const likes = await this.postLikeRepository.find({
+      where: { userId },
+    });
+
+    const posts = [];
+    for (const like of likes) {
+      posts.push(await this.findOne(like.postId, userId));
+    }
+
+    return {
+      message: 'success',
+      data: posts,
+    };
   }
 }
