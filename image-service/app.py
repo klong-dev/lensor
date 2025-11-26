@@ -10,6 +10,8 @@ import logging
 from dotenv import load_dotenv
 from functools import wraps
 import jwt
+import xml.etree.ElementTree as ET
+import hashlib
 
 # Load environment variables
 load_dotenv()
@@ -448,6 +450,71 @@ def process_image(file, filename):
         'metadata': exif_data
     }
 
+def read_signature_from_xmp(xmp_path):
+    """Read existing signature from XMP file if exists"""
+    try:
+        tree = ET.parse(xmp_path)
+        root = tree.getroot()
+        ns = {
+            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+            "lensor": "https://lensor.io/xmp/"
+        }
+        
+        # Find signature node
+        sig_node = root.find(".//lensor:Signature", ns)
+        if sig_node is not None and sig_node.text:
+            # Parse signature: "UID=xxx;SIGN=yyy"
+            parts = sig_node.text.split(';')
+            data = {}
+            for part in parts:
+                if '=' in part:
+                    key, value = part.split('=', 1)
+                    data[key] = value
+            return data.get('UID'), data.get('SIGN')
+        return None, None
+    except Exception as e:
+        logger.warning(f'Failed to read signature from XMP: {str(e)}')
+        return None, None
+
+def append_signature_to_xmp(xmp_path, user_id, signature):
+    """Append signature to XMP file"""
+    try:
+        tree = ET.parse(xmp_path)
+        root = tree.getroot()
+        ns = {"rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"}
+        rdf = root.find(".//rdf:RDF", ns)
+        
+        if rdf is None:
+            raise ValueError("Invalid XMP file: missing rdf:RDF element")
+        
+        # Register custom namespace
+        ET.register_namespace("lensor", "https://lensor.io/xmp/")
+        ET.register_namespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+        
+        # Create Description and Signature nodes
+        desc = ET.SubElement(rdf, "{https://lensor.io/xmp/}Description")
+        sig_node = ET.SubElement(desc, "{https://lensor.io/xmp/}Signature")
+        sig_node.text = f"UID={user_id};SIGN={signature}"
+        
+        tree.write(xmp_path, xml_declaration=True, encoding="utf-8")
+        return True
+    except Exception as e:
+        logger.error(f'Failed to append signature to XMP: {str(e)}')
+        raise
+
+def generate_signature(user_id, filename, secret_key=None):
+    """Generate HMAC signature for preset file"""
+    if secret_key is None:
+        secret_key = app.config.get('SECRET_KEY', 'your-secret-key-here')
+    
+    data = f"{user_id}:{filename}:{secret_key}"
+    return hashlib.sha256(data.encode()).hexdigest()[:32]
+
+def verify_signature(user_id, filename, signature, secret_key=None):
+    """Verify signature matches"""
+    expected_signature = generate_signature(user_id, filename, secret_key)
+    return signature == expected_signature
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -545,8 +612,11 @@ def upload_multiple():
 
 @app.route('/upload/preset', methods=['POST'])
 def upload_preset():
-    """Upload preset file (no image processing)"""
+    """Upload preset file with signature validation and ownership check"""
+    temp_file_path = None
+    
     try:
+        # Validate file exists
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
         
@@ -555,33 +625,133 @@ def upload_preset():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        # Validate file extension for preset files
-        if not allowed_file(file.filename, PRESET_EXTENSIONS):
+        # Get user_id from form data (sent by NestJS)
+        user_id = request.form.get('userId') or request.form.get('user_id')
+        
+        if not user_id:
+            logger.error('Missing user_id in request')
             return jsonify({
-                'error': f'File type not allowed. Supported preset formats: {", ".join(PRESET_EXTENSIONS)}'
+                'error': 'User ID is required',
+                'code': 'MISSING_USER_ID'
             }), 400
         
-        # Generate unique filename preserving original extension
-        file_ext = file.filename.rsplit('.', 1)[1].lower()
-        unique_filename = f"{uuid.uuid4().hex}_{int(datetime.now().timestamp())}.{file_ext}"
+        # Validate file extension
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
         
-        # Save preset file directly (no processing needed)
-        preset_path = os.path.join(app.config['UPLOAD_FOLDER'], 'presets', unique_filename)
+        if not file_ext or file_ext not in PRESET_EXTENSIONS:
+            return jsonify({
+                'error': f'File type not allowed. Supported formats: {", ".join(PRESET_EXTENSIONS)}',
+                'code': 'INVALID_FILE_TYPE'
+            }), 400
+        
+        # Generate unique filename
+        timestamp = int(datetime.now().timestamp())
+        unique_filename = f"{uuid.uuid4().hex}_{timestamp}.{file_ext}"
+        
+        # Create presets directory if not exists
+        presets_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'presets')
+        os.makedirs(presets_dir, exist_ok=True)
+        
+        # Save file temporarily
+        preset_path = os.path.join(presets_dir, unique_filename)
+        temp_file_path = preset_path  # Track for cleanup
         file.save(preset_path)
         
-        logger.info(f'Uploaded preset file: {unique_filename}')
+        logger.info(f'Saved preset file temporarily: {unique_filename}')
+        
+        # Process XMP files - Add signature and validate ownership
+        if file_ext == 'xmp':
+            try:
+                # Check for existing signature (anti-piracy)
+                existing_user_id, existing_signature = read_signature_from_xmp(preset_path)
+                
+                if existing_user_id and existing_signature:
+                    # File already has a signature - someone is re-uploading
+                    logger.warning(
+                        f'Preset already has signature: owner={existing_user_id}, uploader={user_id}'
+                    )
+                    
+                    if existing_user_id != user_id:
+                        # CRITICAL: Different user trying to re-upload someone else's preset
+                        os.remove(preset_path)
+                        logger.error(
+                            f'🚨 SECURITY: User {user_id} attempted to upload preset owned by {existing_user_id}'
+                        )
+                        return jsonify({
+                            'error': 'This preset belongs to another user. Unauthorized upload detected.',
+                            'code': 'PRESET_OWNERSHIP_VIOLATION'
+                        }), 403
+                    else:
+                        # Same user re-uploading their own preset - allowed
+                        logger.info(f'User {user_id} is re-uploading their own preset')
+                        # Continue to add new signature
+                
+                # Generate and append signature
+                signature = generate_signature(user_id, unique_filename)
+                append_signature_to_xmp(preset_path, user_id, signature)
+                
+                logger.info(
+                    f'✅ Added signature to XMP: {unique_filename} | User: {user_id} | Sign: {signature[:8]}...'
+                )
+                
+            except ET.ParseError as parse_error:
+                # Invalid XML structure
+                if os.path.exists(preset_path):
+                    os.remove(preset_path)
+                logger.error(f'Invalid XMP XML structure: {str(parse_error)}')
+                return jsonify({
+                    'error': 'Invalid XMP file format. File may be corrupted.',
+                    'code': 'INVALID_XMP_FORMAT'
+                }), 400
+                
+            except ValueError as val_error:
+                # Missing required XMP elements
+                if os.path.exists(preset_path):
+                    os.remove(preset_path)
+                logger.error(f'Invalid XMP structure: {str(val_error)}')
+                return jsonify({
+                    'error': str(val_error),
+                    'code': 'INVALID_XMP_STRUCTURE'
+                }), 400
+                
+            except Exception as sig_error:
+                # Signature processing failed
+                if os.path.exists(preset_path):
+                    os.remove(preset_path)
+                logger.error(f'Signature processing error: {str(sig_error)}')
+                return jsonify({
+                    'error': 'Failed to process preset signature',
+                    'code': 'SIGNATURE_PROCESSING_ERROR',
+                    'details': str(sig_error)
+                }), 500
+        
+        # Success - file uploaded and signed
+        logger.info(f'✅ Preset upload successful: {unique_filename} for user {user_id}')
         
         return jsonify({
             'success': True,
             'data': {
                 'url': f'/uploads/presets/{unique_filename}',
-                'filename': unique_filename
+                'filename': unique_filename,
+                'userId': user_id,
+                'fileType': file_ext
             }
         }), 200
         
     except Exception as e:
-        logger.error(f'Error uploading preset file: {str(e)}')
-        return jsonify({'error': str(e)}), 500
+        # Cleanup on error
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+                logger.info(f'Cleaned up temporary file: {temp_file_path}')
+            except Exception as cleanup_error:
+                logger.error(f'Failed to cleanup file: {str(cleanup_error)}')
+        
+        logger.error(f'❌ Preset upload error: {str(e)}', exc_info=True)
+        return jsonify({
+            'error': 'Internal server error during preset upload',
+            'code': 'UPLOAD_ERROR'
+        }), 500
 
 @app.route('/uploads/<path:filepath>', methods=['GET'])
 def serve_file(filepath):
