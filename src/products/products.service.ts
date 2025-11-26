@@ -247,7 +247,7 @@ export class ProductsService {
       updatedAt: product.updatedAt.toISOString(),
       warranty,
       isUserBought,
-      reviews: isUserBought ? reviews : [],
+      reviews,
     };
   }
 
