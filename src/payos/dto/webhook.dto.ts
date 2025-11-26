@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 
 export class WebhookDto {
   @IsNotEmpty()
@@ -10,6 +16,11 @@ export class WebhookDto {
   @IsString()
   @IsOptional()
   code: string;
+
+  @IsNotEmpty()
+  @IsBoolean()
+  @IsOptional()
+  success: boolean;
 
   @IsNotEmpty()
   @IsString()
