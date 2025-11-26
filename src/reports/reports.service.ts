@@ -35,8 +35,21 @@ export class ReportsService {
       throw new BadRequestException('Order not found or access denied');
     }
 
-    if (order.status !== 'completed') {
-      throw new BadRequestException('Can only report completed orders');
+    if (order.status !== 'completed' && order.status !== 'reported') {
+      throw new BadRequestException(
+        'Can only report completed or reported orders',
+      );
+    }
+
+    const isProductReported = this.reportRepository.findOne({
+      where: {
+        productId: createReportDto.productId,
+        buyerId: userId,
+      },
+    });
+
+    if (isProductReported) {
+      throw new BadRequestException('Product has already been reported');
     }
 
     // Check if within 3-day window
