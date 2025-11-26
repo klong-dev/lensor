@@ -34,7 +34,7 @@ export class WithdrawalsController {
     };
   }
 
-  @Get('check')
+  @Post('check')
   async checkWithdrawal(
     @Body() checkWithdrawalDto: CheckWithdrawalDto,
     @CurrentUser() user: { userId: string },
