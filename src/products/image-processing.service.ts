@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -207,7 +212,7 @@ export class ImageProcessingService {
    */
   async uploadPresetFile(
     file: Express.Multer.File,
-    authToken: string,
+    userId: string,
   ): Promise<{
     url: string;
     filename: string;
@@ -218,6 +223,7 @@ export class ImageProcessingService {
         filename: file.originalname,
         contentType: file.mimetype,
       });
+      formData.append('userId', userId);
 
       const response = await axios.post(
         `${this.imageServiceUrl}/upload/preset`,
@@ -225,7 +231,6 @@ export class ImageProcessingService {
         {
           headers: {
             ...formData.getHeaders(),
-            Authorization: `Bearer ${authToken}`,
           },
           maxBodyLength: Infinity,
           maxContentLength: Infinity,
@@ -239,11 +244,29 @@ export class ImageProcessingService {
       return response.data.data;
     } catch (error) {
       this.logger.error('Error uploading preset file:', error);
+
       if (axios.isAxiosError(error)) {
+        // ✅ Handle 403 ownership violation
+        if (error.response?.status === 403) {
+          throw new ForbiddenException(
+            error.response.data?.error ||
+              'This preset belongs to another user. Upload denied.',
+          );
+        }
+
+        // ✅ Handle 400 validation errors
+        if (error.response?.status === 400) {
+          throw new BadRequestException(
+            error.response.data?.error || 'Invalid preset file',
+          );
+        }
+
+        // Other errors
         throw new BadRequestException(
           error.response?.data?.error || 'Failed to upload preset file',
         );
       }
+
       throw new BadRequestException('Failed to upload preset file');
     }
   }
