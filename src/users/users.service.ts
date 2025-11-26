@@ -67,6 +67,7 @@ export class UsersService {
           reviewCount: product.reviewCount,
           sellCount: product.sellCount,
           createdAt: product.createdAt,
+          status: product.status,
         })),
       };
     } catch (error) {
