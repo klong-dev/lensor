@@ -41,7 +41,7 @@ export class ReportsService {
       );
     }
 
-    const isProductReported = this.reportRepository.findOne({
+    const isProductReported = await this.reportRepository.findOne({
       where: {
         productId: createReportDto.productId,
         buyerId: userId,
