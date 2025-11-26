@@ -63,15 +63,6 @@ export class ReportsService {
       );
     }
 
-    // Check if already reported
-    const existingReport = await this.reportRepository.findOne({
-      where: { orderId: createReportDto.orderId },
-    });
-
-    if (existingReport) {
-      throw new BadRequestException('Order has already been reported');
-    }
-
     // Find seller from order items
     const orderItems = Array.isArray(order.items) ? order.items : [];
     const productItem = orderItems.find(
