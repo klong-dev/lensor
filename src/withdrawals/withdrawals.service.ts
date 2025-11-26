@@ -101,7 +101,7 @@ export class WithdrawalsService {
 
     // Calculate fee (use system variable)
     const feeRate =
-      (await this.systemVariablesService.getVariable('discountRate')) ?? 0.17;
+      (await this.systemVariablesService.getVariable('discountRate')) / 100;
     const fee = totalAmount * feeRate;
     const actualAmount = totalAmount - fee;
 
