@@ -65,7 +65,7 @@ export class ProductsService {
     };
   }
 
-  async findAll() {
+  async findAll(userId?: string) {
     const products = await this.productRepository.find({
       where: { deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
@@ -190,19 +190,21 @@ export class ProductsService {
       }));
 
     let isUserBought = false;
-    const userOrders = await this.orderRepository.find({
-      where: { userId: userId },
-    });
+    if (userId) {
+      const userOrders = await this.orderRepository.find({
+        where: { userId: userId },
+      });
 
-    for (const order of userOrders) {
-      const items = order.items || [];
-      if (
-        items &&
-        items.length > 0 &&
-        items.find((item) => item.productId === id)
-      ) {
-        isUserBought = true;
-        break;
+      for (const order of userOrders) {
+        const items = order.items || [];
+        if (
+          items &&
+          items.length > 0 &&
+          items.find((item) => item.productId === id)
+        ) {
+          isUserBought = true;
+          break;
+        }
       }
     }
 
