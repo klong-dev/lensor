@@ -11,6 +11,7 @@ import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { WebhookDto } from './dto/webhook.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('payos')
 export class PayOSController {
@@ -27,6 +28,7 @@ export class PayOSController {
   }
 
   @Post('webhook')
+  @Public()
   async handleWebhook(@Body() webhookData: WebhookDto, @Res() res) {
     try {
       return res.status(200).json({ message: 'OK' });
