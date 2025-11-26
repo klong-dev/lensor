@@ -208,6 +208,14 @@ export class ProductsService {
       }
     }
 
+    let isUserReviewed = false;
+    if (userId) {
+      const existingReview = await this.reviewRepository.findOne({
+        where: { productId: id, userId: userId, deletedAt: IsNull() },
+      });
+      isUserReviewed = !!existingReview;
+    }
+
     return {
       id: product.id,
       name: product.title,
@@ -247,6 +255,7 @@ export class ProductsService {
       updatedAt: product.updatedAt.toISOString(),
       warranty,
       isUserBought,
+      isUserReviewed,
       reviews,
     };
   }
