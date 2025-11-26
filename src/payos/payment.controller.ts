@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  Logger,
-  Res,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Logger } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { WebhookDto } from './dto/webhook.dto';
@@ -29,9 +21,8 @@ export class PayOSController {
 
   @Post('webhook')
   @Public()
-  async handleWebhook(@Body() webhookData: WebhookDto, @Res() res) {
+  async handleWebhook(@Body() webhookData: WebhookDto) {
     try {
-      return res.status(200).json({ message: 'OK' });
       const result = await this.paymentService.handleWebhook(webhookData);
 
       return result;
