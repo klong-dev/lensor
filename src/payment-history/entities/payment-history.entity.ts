@@ -8,8 +8,8 @@ import {
 
 @Entity('payment_history')
 export class PaymentHistory {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column('uuid')
   userId: string;

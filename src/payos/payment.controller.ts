@@ -1,20 +1,12 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  ParseIntPipe,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Logger } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { WebhookDto } from './dto/webhook.dto';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
-@Controller('api/payos')
-export class PaymentController {
-  private readonly logger = new Logger(PaymentController.name);
+@Controller('payos')
+export class PayOSController {
+  private readonly logger = new Logger(PayOSController.name);
 
   constructor(private paymentService: PaymentService) {}
 
@@ -39,7 +31,7 @@ export class PaymentController {
   }
 
   @Get('status/:paymentId')
-  async getPaymentStatus(@Param('paymentId') paymentId: string) {
+  async getPaymentStatus(@Param('paymentId') paymentId: number) {
     return this.paymentService.getPaymentStatus(paymentId);
   }
 }

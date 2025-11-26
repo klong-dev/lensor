@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PaymentController } from './payment.controller';
+import { PayOSController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { OrdersModule } from '../orders/orders.module';
 import { ProductsModule } from '../products/products.module';
@@ -8,8 +8,8 @@ import { WalletModule } from 'src/wallet/wallet.module';
 
 @Module({
   imports: [OrdersModule, ProductsModule, PaymentHistoryModule, WalletModule],
-  controllers: [PaymentController],
+  controllers: [PayOSController],
   providers: [PaymentService],
   exports: [PaymentService],
 })
-export class PaymentModule {}
+export class PayOSModule {}

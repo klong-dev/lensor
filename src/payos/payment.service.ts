@@ -60,11 +60,11 @@ export class PaymentService {
       // const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
 
       const paymentData = {
-        orderCode: paymentHistory.transactionId,
+        orderCode: paymentHistory.id,
         amount: amount,
-        description: `#${paymentHistory.id} - PayOS deposit`,
-        cancelUrl: `${frontendUrl}/payment/failed?orderCode=${paymentHistory.transactionId}`,
-        returnUrl: `${frontendUrl}/payment/success?orderCode=${paymentHistory.transactionId}`,
+        description: `#${paymentHistory.amount}VNĐ - PayOS deposit`,
+        cancelUrl: `${frontendUrl}/payment/failed?orderCode=${paymentHistory.id}`,
+        returnUrl: `${frontendUrl}/payment/success?orderCode=${paymentHistory.id}`,
       };
 
       this.logger.log(
@@ -149,6 +149,12 @@ export class PaymentService {
           reference,
           { transactionDateTime },
         );
+
+        await this.walletService.addBalance(
+          payment.userId,
+          amount,
+          `VNPay deposit ${amount.toLocaleString()} VND`,
+        );
       } else {
         // Payment failed or cancelled
         this.logger.warn(`Payment failed for order ${orderCode}: ${desc}`);
@@ -170,7 +176,7 @@ export class PaymentService {
     }
   }
 
-  async getPaymentStatus(paymentId: string) {
+  async getPaymentStatus(paymentId: number) {
     const payment = await this.paymentHistoryService.findById(paymentId);
 
     if (!payment) {
