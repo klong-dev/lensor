@@ -502,17 +502,27 @@ def append_signature_to_xmp(xmp_path, user_id, signature):
         logger.error(f'Failed to append signature to XMP: {str(e)}')
         raise
 
-def generate_signature(user_id, filename, secret_key=None):
-    """Generate HMAC signature for preset file"""
+def generate_signature(user_id, file_path, secret_key=None):
+    """Generate signature based on user_id and file content"""
     if secret_key is None:
-        secret_key = app.config.get('SECRET_KEY', 'your-secret-key-here')
+        secret_key = app.config.get('SECRET_KEY', 'default-secret-key')
     
-    data = f"{user_id}:{filename}:{secret_key}"
+    # ✅ Hash dựa trên nội dung file, không phụ thuộc filename
+    file_hash = generate_file_hash(file_path)
+    data = f"{user_id}:{file_hash}:{secret_key}"
     return hashlib.sha256(data.encode()).hexdigest()[:32]
 
-def verify_signature(user_id, filename, signature, secret_key=None):
+def generate_file_hash(file_path):
+    """Generate hash of file content"""
+    hasher = hashlib.sha256()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()[:32]
+
+def verify_signature(user_id, file_path, signature, secret_key=None):
     """Verify signature matches"""
-    expected_signature = generate_signature(user_id, filename, secret_key)
+    expected_signature = generate_signature(user_id, file_path, secret_key)
     return signature == expected_signature
 
 @app.route('/health', methods=['GET'])
@@ -687,7 +697,7 @@ def upload_preset():
                         # Continue to add new signature
                 
                 # Generate and append signature
-                signature = generate_signature(user_id, unique_filename)
+                signature = generate_signature(user_id, preset_path)
                 append_signature_to_xmp(preset_path, user_id, signature)
                 
                 logger.info(
