@@ -527,6 +527,36 @@ export class ProductsService {
     return review;
   }
 
+  async deleteReview(productId: string, reviewId: string, userId: string) {
+    const review = await this.reviewRepository.findOne({
+      where: { id: reviewId, deletedAt: IsNull() },
+    });
+
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${reviewId} not found`);
+    }
+
+    if (review.productId !== productId) {
+      throw new BadRequestException(
+        'Review does not belong to the specified product',
+      );
+    }
+
+    if (review.userId !== userId) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this review',
+      );
+    }
+
+    review.deletedAt = new Date();
+    await this.reviewRepository.save(review);
+
+    // Update product rating and review count
+    await this.updateProductRating(review.productId);
+
+    return review;
+  }
+
   private async updateProductRating(productId: string) {
     const reviews = await this.reviewRepository.find({
       where: { productId, deletedAt: IsNull() },
