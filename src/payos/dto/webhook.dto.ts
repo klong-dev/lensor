@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsBoolean,
+  IsObject,
 } from 'class-validator';
 
 export class WebhookDto {
@@ -40,6 +41,7 @@ export class WebhookDto {
   transactionDateTime?: string;
 
   @IsOptional()
+  @IsObject()
   data?: any;
 
   @IsOptional()

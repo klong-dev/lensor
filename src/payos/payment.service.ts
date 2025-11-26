@@ -103,14 +103,16 @@ export class PaymentService {
 
   async handleWebhook(webhookData: any) {
     try {
-      this.logger.log(`Processing webhook for order ${webhookData.orderCode}`);
+      this.logger.log(
+        `Processing webhook for order ${webhookData.data?.orderCode}`,
+      );
       this.logger.debug(`Webhook data: ${JSON.stringify(webhookData)}`);
 
       // PayOS webhook data structure can vary, handle both formats
       const orderCode = webhookData.orderCode || webhookData.data?.orderCode;
-      const amount = webhookData.amount || webhookData.data?.amount;
-      const code = webhookData.code || webhookData.data?.code;
-      const desc = webhookData.desc || webhookData.data?.desc;
+      const amount = webhookData.data?.amount;
+      const code = webhookData.data?.code;
+      const desc = webhookData.data?.desc;
       const reference =
         webhookData.reference || webhookData.data?.reference || null;
       const transactionDateTime =
@@ -131,8 +133,8 @@ export class PaymentService {
       }
 
       // Verify amount matches (if amount is provided)
-      if (amount && amount !== payment.amount) {
-        this.logger.error(
+      if (amount && Number(amount) !== Number(payment.amount)) {
+        this.logger.log(
           `Amount mismatch for order ${orderCode}: expected ${payment.amount}, got ${amount}`,
         );
         throw new BadRequestException('Amount mismatch');
